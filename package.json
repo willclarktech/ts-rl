@@ -17,5 +17,7 @@
 		"test": "echo \"Error: no test specified\" && exit 1"
 	},
 	"dependencies": {},
-	"devDependencies": {}
+	"devDependencies": {
+		"typescript": "^3.9.5"
+	}
 }
