@@ -1,0 +1,21 @@
+{
+	"name": "ts-rl",
+	"version": "0.0.0",
+	"description": "Reinforcement learning using TensorFlow.js",
+	"author": "willclarktech <willclarktech@users.noreply.github.com>",
+	"license": "Apache-2.0",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/willclarktech/ts-rl.git"
+	},
+	"homepage": "https://github.com/willclarktech/ts-rl#readme",
+	"bugs": {
+		"url": "https://github.com/willclarktech/ts-rl/issues"
+	},
+	"main": "build/index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"dependencies": {},
+	"devDependencies": {}
+}
