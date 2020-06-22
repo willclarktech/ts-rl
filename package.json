@@ -20,6 +20,8 @@
 		"@tensorflow/tfjs-node": "^2.0.1"
 	},
 	"devDependencies": {
+		"jest": "^26.0.1",
+		"ts-jest": "^26.1.1",
 		"typescript": "^3.9.5"
 	}
 }
