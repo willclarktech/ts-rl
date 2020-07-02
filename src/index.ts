@@ -1,4 +1,5 @@
 import * as tf from "@tensorflow/tfjs-node";
+import fs from "fs";
 
 import carsData from "./data/cars.json";
 
@@ -119,7 +120,7 @@ const main = async (): Promise<void> => {
 	const preparedData = prepareData(carsData);
 	await train(model, preparedData.inputs, preparedData.labels);
 	const results = testModel(model, preparedData);
-	console.info(results);
+	fs.writeFileSync("./results/data/xxx.json", JSON.stringify(results));
 };
 
 if (process.env.NODE_ENV !== "TEST") {
