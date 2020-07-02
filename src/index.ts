@@ -61,7 +61,12 @@ export const createNetwork = (): tf.Sequential => {
 		layers: [
 			tf.layers.dense({
 				inputShape: [1],
-				units: 1,
+				units: 10,
+				activation: "sigmoid",
+			}),
+			tf.layers.dense({
+				units: 4,
+				activation: "sigmoid",
 			}),
 			tf.layers.dense({
 				units: 1,
@@ -77,14 +82,14 @@ export const train = async (
 	labels: tf.Tensor,
 ): Promise<tf.History> => {
 	const compileArgs = {
-		optimizer: tf.train.adam(),
+		optimizer: tf.train.adam(0.001),
 		loss: tf.losses.meanSquaredError,
 	};
 	model.compile(compileArgs);
 
 	const fitArgs = {
 		batchSize: 32,
-		epochs: 50,
+		epochs: 500,
 		shuffle: true,
 	};
 	return model.fit(inputs, labels, fitArgs);
