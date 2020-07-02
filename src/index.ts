@@ -55,18 +55,18 @@ export const prepareData = (
 };
 
 export const createNetwork = (): tf.Sequential => {
-	const network = tf.sequential();
-	network.add(
-		tf.layers.dense({
-			inputShape: [1],
-			units: 1,
-		}),
-	);
-	network.add(
-		tf.layers.dense({
-			units: 1,
-		}),
-	);
+	const network = tf.sequential({
+		name: "tutorial-2d",
+		layers: [
+			tf.layers.dense({
+				inputShape: [1],
+				units: 1,
+			}),
+			tf.layers.dense({
+				units: 1,
+			}),
+		],
+	});
 	return network;
 };
 
