@@ -3,9 +3,24 @@ import carsData from "./data/cars.json";
 
 describe("basic network", () => {
 	it("trains", async () => {
-		const model = createNetwork();
-		const { inputs, labels } = prepareData(carsData);
-		const history = await train(model, inputs, labels);
+		const { normalizedInputs, normalizedLabels } = prepareData(carsData);
+
+		const activationFunction = "sigmoid";
+		const model = createNetwork([1, 4, 4, 1], activationFunction);
+
+		const hyperparameters = {
+			batchSize: 32,
+			epochs: 20,
+			shuffle: true,
+			learningRate: 0.03,
+		};
+		const history = await train(
+			model,
+			normalizedInputs,
+			normalizedLabels,
+			hyperparameters,
+		);
+
 		const losses = history.history.loss;
 		return expect(losses[losses.length - 1]).toBeLessThan(0.05);
 	});

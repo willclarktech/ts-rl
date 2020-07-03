@@ -4,8 +4,10 @@ import fs from "fs";
 import carsData from "./data/cars.json";
 
 type PreparedData = {
-	readonly inputs: tf.Tensor;
-	readonly labels: tf.Tensor;
+	readonly inputs: readonly number[];
+	readonly labels: readonly number[];
+	readonly normalizedInputs: tf.Tensor;
+	readonly normalizedLabels: tf.Tensor;
 	readonly inputMax: tf.Tensor;
 	readonly inputMin: tf.Tensor;
 	readonly labelMax: tf.Tensor;
@@ -18,6 +20,17 @@ type NormalizationParameters = {
 	readonly labelMax: tf.Tensor;
 	readonly labelMin: tf.Tensor;
 };
+
+type Point = {
+	readonly x: number;
+	readonly y: number;
+};
+
+const normalizeData = <T extends tf.Tensor>(
+	tensor: T,
+	min = tensor.min(),
+	max = tensor.max(),
+): T => tensor.sub(min).div(max.sub(min));
 
 export const prepareData = (
 	data: readonly { readonly mpg: number; readonly horsepower: number }[],
@@ -37,16 +50,14 @@ export const prepareData = (
 		const labelMax = labelTensor.max();
 		const labelMin = labelTensor.min();
 
-		const normalizedInputs = inputTensor
-			.sub(inputMin)
-			.div(inputMax.sub(inputMin));
-		const normalizedLabels = labelTensor
-			.sub(labelMin)
-			.div(labelMax.sub(labelMin));
+		const normalizedInputs = normalizeData(inputTensor, inputMin, inputMax);
+		const normalizedLabels = normalizeData(labelTensor, labelMin, labelMax);
 
 		return {
-			inputs: normalizedInputs,
-			labels: normalizedLabels,
+			inputs: inputs,
+			labels: labels,
+			normalizedInputs: normalizedInputs,
+			normalizedLabels: normalizedLabels,
 			inputMax,
 			inputMin,
 			labelMax,
@@ -55,23 +66,23 @@ export const prepareData = (
 	});
 };
 
-export const createNetwork = (): tf.Sequential => {
+export const createNetwork = (
+	widths: readonly number[],
+	activation: "sigmoid",
+): tf.Sequential => {
 	const network = tf.sequential({
 		name: "tutorial-2d",
-		layers: [
-			tf.layers.dense({
-				inputShape: [1],
-				units: 10,
-				activation: "sigmoid",
-			}),
-			tf.layers.dense({
-				units: 4,
-				activation: "sigmoid",
-			}),
-			tf.layers.dense({
-				units: 1,
-			}),
-		],
+		layers: widths.slice(1).map((width, i) =>
+			i === 0
+				? tf.layers.dense({
+						inputShape: [widths[0]],
+						units: width,
+						activation,
+				  })
+				: i !== widths.length - 2
+				? tf.layers.dense({ units: width, activation })
+				: tf.layers.dense({ units: width }),
+		),
 	});
 	return network;
 };
@@ -80,52 +91,85 @@ export const train = async (
 	model: tf.Sequential,
 	inputs: tf.Tensor,
 	labels: tf.Tensor,
+	hyperparameters: tf.ModelFitArgs & { readonly learningRate: number },
 ): Promise<tf.History> => {
 	const compileArgs = {
-		optimizer: tf.train.adam(0.001),
+		optimizer: tf.train.adam(hyperparameters.learningRate),
 		loss: tf.losses.meanSquaredError,
 	};
 	model.compile(compileArgs);
 
-	const fitArgs = {
-		batchSize: 32,
-		epochs: 500,
-		shuffle: true,
-	};
-	return model.fit(inputs, labels, fitArgs);
+	return model.fit(inputs, labels, hyperparameters);
 };
 
 export const testModel = (
 	model: tf.Sequential,
 	{ inputMax, inputMin, labelMax, labelMin }: NormalizationParameters,
-): readonly { readonly x: number; readonly y: number }[] => {
-	const [xs, predictions] = tf.tidy(() => {
-		const raw_xs = tf.linspace(0, 1, 100);
-		const raw_predictions = model.predict(
-			raw_xs.reshape([100, 1]),
-		) as tf.Tensor;
+): readonly tf.TypedArray[] => {
+	return tf.tidy(() => {
+		const rawXs = tf.linspace(0, 1, 100);
+		const rawPredictions = model.predict(rawXs.reshape([100, 1])) as tf.Tensor;
 
-		const unnormalized_xs = raw_xs
+		const unnormalizedXs = rawXs
 			.mul(inputMax.sub(inputMin))
 			.add(inputMin)
 			.dataSync();
-		const unnormalized_predictions = raw_predictions
+		const unnormalizedPredictions = rawPredictions
 			.mul(labelMax.sub(labelMin))
 			.add(labelMin)
 			.dataSync();
 
-		return [unnormalized_xs, unnormalized_predictions];
+		return [unnormalizedXs, unnormalizedPredictions];
 	});
-
-	return Array.from(xs).map((x, i) => ({ x, y: predictions[i] }));
 };
 
+const createPlotData = (
+	xs: readonly number[],
+	ys: readonly number[],
+): readonly Point[] =>
+	Array.from(xs).map((x: number, i: number): Point => ({ x, y: ys[i] }));
+
 const main = async (): Promise<void> => {
-	const model = createNetwork();
 	const preparedData = prepareData(carsData);
-	await train(model, preparedData.inputs, preparedData.labels);
-	const results = testModel(model, preparedData);
-	fs.writeFileSync("./results/data/xxx.json", JSON.stringify(results));
+
+	const activationFunction = "sigmoid";
+	const model = createNetwork([1, 4, 4, 1], activationFunction);
+
+	const hyperparameters = {
+		batchSize: 32,
+		epochs: 20,
+		shuffle: true,
+		learningRate: 0.03,
+	};
+	await train(
+		model,
+		preparedData.normalizedInputs,
+		preparedData.normalizedLabels,
+		hyperparameters,
+	);
+	const predictions = testModel(model, preparedData);
+
+	const dataDir = "./results/data";
+	const experimentName = "cars";
+	const fileName = `${dataDir}/${experimentName}.json`;
+
+	const originalData = createPlotData(preparedData.inputs, preparedData.labels);
+	const predictionData = createPlotData(
+		Array.from(predictions[0]),
+		Array.from(predictions[1]),
+	);
+
+	fs.writeFileSync(
+		fileName,
+		JSON.stringify({
+			name: "Horsepower v MPG",
+			xLabel: "Horsepower",
+			yLabel: "MPG",
+			height: 300,
+			originalData,
+			predictionData,
+		}),
+	);
 };
 
 if (process.env.NODE_ENV !== "TEST") {
