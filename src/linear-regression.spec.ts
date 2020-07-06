@@ -1,5 +1,5 @@
-import { createNetwork, prepareData, train } from "./";
 import carsData from "./data/cars.json";
+import { createNetwork, prepareData, train } from "./linear-regression";
 
 describe("basic network", () => {
 	it("trains", async () => {
