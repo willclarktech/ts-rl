@@ -2,6 +2,7 @@ import * as tf from "@tensorflow/tfjs-node";
 import fs from "fs";
 
 import carsData from "./data/cars.json";
+import { createNetwork } from "./util";
 
 type PreparedData = {
 	readonly inputs: readonly number[];
@@ -64,27 +65,6 @@ export const prepareData = (
 			labelMin,
 		};
 	});
-};
-
-export const createNetwork = (
-	widths: readonly number[],
-	activation: "sigmoid",
-): tf.Sequential => {
-	const network = tf.sequential({
-		name: "tutorial-2d",
-		layers: widths.slice(1).map((width, i) =>
-			i === 0
-				? tf.layers.dense({
-						inputShape: [widths[0]],
-						units: width,
-						activation,
-				  })
-				: i !== widths.length - 2
-				? tf.layers.dense({ units: width, activation })
-				: tf.layers.dense({ units: width }),
-		),
-	});
-	return network;
 };
 
 export const train = async (
