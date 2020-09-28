@@ -1,14 +1,12 @@
 import { Environment, Observation, Sample } from "./core";
 
-type State = readonly [number, number, number, number];
-
 export class CartPole implements Environment {
 	public name: string;
 	public winningScore: number;
 	public numObservationDimensions: number;
 	public numActions: number;
 
-	private state: State;
+	private state: readonly [number, number, number, number];
 	private gravity: number;
 	private massCart: number;
 	private massPole: number;

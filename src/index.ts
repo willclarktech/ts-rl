@@ -1,11 +1,10 @@
-import { CartPole } from "./cart-pole";
-import { Environment } from "./core";
-import { ReinforceLearner } from "./reinforce";
+import { Reinforce } from "./agents";
+import { CartPole, Environment } from "./environments";
 import { logEpisode, mean } from "./util";
 
 const train = (
 	env: Environment,
-	learner: ReinforceLearner,
+	agent: Reinforce,
 	maxEpisodes: number,
 	rollingAveragePeriod: number,
 	logPeriod: number,
@@ -15,7 +14,7 @@ const train = (
 	const rollingAverageReturns = [];
 
 	for (let episode = 1; episode <= maxEpisodes; ++episode) {
-		const ret = learner.runEpisode(env);
+		const ret = agent.runEpisode(env);
 		returns.push(ret);
 
 		const rollingAverageReturn = mean(returns.slice(-100));
@@ -49,7 +48,7 @@ const main = (): void => {
 	const hiddenWidths = [4, 4];
 	const alpha = 0.001; // Learning rate
 	const gamma = 0.99; // Discount rate
-	const learner = new ReinforceLearner(env, hiddenWidths, alpha, gamma);
+	const learner = new Reinforce(env, hiddenWidths, alpha, gamma);
 
 	const maxEpisodes = 1000;
 	const rollingAveragePeriod = 100;

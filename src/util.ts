@@ -1,7 +1,7 @@
 import * as tf from "@tensorflow/tfjs-node";
 import fs from "fs";
 
-import { ActivationFunction } from "./core";
+type ActivationFunction = "relu" | "sigmoid" | "softmax";
 
 export const sum = (arr: readonly number[]): number =>
 	arr.reduce((total, next) => total + next, 0);

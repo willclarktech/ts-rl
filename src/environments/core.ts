@@ -1,5 +1,3 @@
-export type ActivationFunction = "relu" | "sigmoid" | "softmax";
-
 export type Observation = readonly number[];
 
 export type Sample = {
@@ -15,9 +13,4 @@ export interface Environment {
 	numActions: number;
 	reset(): Observation;
 	step(action: number): Sample;
-}
-
-export interface Learner {
-	name: string;
-	runEpisode(env: Environment): number;
 }

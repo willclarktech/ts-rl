@@ -1,7 +1,8 @@
 import * as tf from "@tensorflow/tfjs-node";
 
-import { Environment, Learner, Observation } from "./core";
-import { createNetwork, mean, sum } from "./util";
+import { Environment, Observation } from "../environments";
+import { createNetwork, mean, sum } from "../util";
+import { Agent } from "./core";
 
 const calculateDiscountedReward = (
 	rewards: readonly number[],
@@ -38,7 +39,7 @@ type Sample = {
 	readonly logProbability: tf.Tensor1D;
 };
 
-export class ReinforceLearner implements Learner {
+export class Reinforce implements Agent {
 	public name: string;
 
 	private gamma: number;
