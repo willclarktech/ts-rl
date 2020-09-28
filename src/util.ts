@@ -1,12 +1,12 @@
 import * as tf from "@tensorflow/tfjs-node";
 import fs from "fs";
 
+import { ActivationFunction } from "./core";
+
 export const sum = (arr: readonly number[]): number =>
 	arr.reduce((total, next) => total + next, 0);
 
 export const mean = (arr: readonly number[]): number => sum(arr) / arr.length;
-
-export type ActivationFunction = "relu" | "sigmoid" | "softmax";
 
 export const createNetwork = (
 	widths: readonly number[],
