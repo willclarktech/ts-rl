@@ -1,5 +1,5 @@
 import { Agent, Reinforce } from "./agents";
-import { CartPole, Environment } from "./environments";
+import { Blackjack, CartPole, Environment } from "./environments";
 import { logEpisode, mean } from "./util";
 
 const train = (
@@ -43,9 +43,16 @@ const train = (
 };
 
 const main = (): void => {
-	const env: Environment = new CartPole();
+	const envs: { readonly [key: string]: () => Environment } = {
+		Blackjack: (): Environment => new Blackjack(),
+		CartPole: (): Environment => new CartPole(),
+	};
+	const userEnv = process.argv[2];
+	const createEnv: () => Environment =
+		envs[userEnv] ?? ((): Environment => new CartPole());
+	const env = createEnv();
 
-	const hiddenWidths = [4, 4];
+	const hiddenWidths = [8];
 	const alpha = 0.001; // Learning rate
 	const gamma = 0.99; // Discount rate
 	const agent: Agent = new Reinforce(env, hiddenWidths, alpha, gamma);
@@ -70,4 +77,5 @@ const main = (): void => {
 	console.info(didWin ? "You won!" : "You lost.");
 };
 
+// Run with eg `npm start [Blackjack]`
 main();
