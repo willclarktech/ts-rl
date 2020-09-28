@@ -1,14 +1,21 @@
 import * as tf from "@tensorflow/tfjs-node";
+import fs from "fs";
 
-type ActivationFunction = "relu" | "sigmoid" | "softmax";
+export const sum = (arr: readonly number[]): number =>
+	arr.reduce((total, next) => total + next, 0);
+
+export const mean = (arr: readonly number[]): number => sum(arr) / arr.length;
+
+export type ActivationFunction = "relu" | "sigmoid" | "softmax";
 
 export const createNetwork = (
 	widths: readonly number[],
 	activation: ActivationFunction,
 	outputActivation?: ActivationFunction,
+	name?: string,
 ): tf.Sequential => {
 	const network = tf.sequential({
-		name: "tutorial-2d",
+		name,
 		layers: widths.slice(1).map((width, i) =>
 			i === 0
 				? tf.layers.dense({
@@ -22,4 +29,28 @@ export const createNetwork = (
 		),
 	});
 	return network;
+};
+
+export const logEpisode = (
+	episode: number,
+	returns: readonly number[],
+	rollingAveragePeriod: number,
+	rollingAverageReturns: readonly number[],
+	filePath?: string,
+): void => {
+	if (filePath) {
+		fs.writeFileSync(
+			filePath,
+			JSON.stringify({
+				returns,
+				rollingAveragePeriod,
+				rollingAverageReturns,
+			}),
+		);
+	}
+
+	console.info(
+		`Episode ${episode} - Rolling average return (${rollingAveragePeriod} episodes):`,
+		rollingAverageReturns.slice(-1)[0],
+	);
 };
