@@ -21,7 +21,7 @@
 		"start": "npm run build && node ./build/index.js"
 	},
 	"dependencies": {
-		"@tensorflow/tfjs-node": "^2.0.1"
+		"@tensorflow/tfjs-node": "^2.4.0"
 	},
 	"devDependencies": {
 		"@types/jest": "^26.0.0",
