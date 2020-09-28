@@ -1,4 +1,7 @@
-/* globals window, document, XMLHttpRequest, tfvis */
+/* globals document, XMLHttpRequest, tfvis */
+
+let currentExperimentName = "CartPole-Reinforce";
+let timeout = null;
 
 const loadJSON = async (path) => {
 	const xobj = new XMLHttpRequest();
@@ -16,15 +19,15 @@ const loadJSON = async (path) => {
 
 const convertToPoint = (y, x) => ({ x, y });
 
-async function run() {
-	const experimentName = "CartPole-Reinforce";
+async function run(experimentName) {
 	const filePath = `data/${experimentName}.json`;
 	const { returns, rollingAverageReturns } = await loadJSON(filePath);
 	const returnsPoints = returns.map(convertToPoint);
 	const rollingAverageReturnsPoints = rollingAverageReturns.map(convertToPoint);
 
+	tfvis.visor().open();
 	tfvis.render.linechart(
-		{ name: experimentName },
+		{ name: "visor" },
 		{
 			values: [returnsPoints, rollingAverageReturnsPoints],
 			series: ["returns", "rolling average return (100 episodes)"],
@@ -36,7 +39,17 @@ async function run() {
 		},
 	);
 
-	setTimeout(window.location.reload.bind(window.location), 5000);
+	document.getElementById("environment").onchange = (event) => {
+		currentExperimentName = `${event.target.value}-Reinforce`;
+		if (timeout) {
+			clearTimeout(timeout);
+		}
+		run(currentExperimentName);
+	};
+	timeout = setTimeout(run.bind(null, currentExperimentName), 5000);
 }
 
-document.addEventListener("DOMContentLoaded", run);
+document.addEventListener(
+	"DOMContentLoaded",
+	run.bind(null, currentExperimentName),
+);
