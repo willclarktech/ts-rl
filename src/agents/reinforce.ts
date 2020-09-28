@@ -40,11 +40,11 @@ type Sample = {
 };
 
 export class Reinforce implements Agent {
-	public name: string;
+	public readonly name: string;
 
-	private gamma: number;
-	private network: tf.Sequential;
-	private optimizer: tf.Optimizer;
+	private readonly gamma: number;
+	private readonly network: tf.Sequential;
+	private readonly optimizer: tf.Optimizer;
 
 	constructor(
 		{ numObservationDimensions, numActions }: Environment,
@@ -62,7 +62,7 @@ export class Reinforce implements Agent {
 	private getSample(env: Environment, observation: Observation): Sample {
 		const processedObservation = tf
 			.tensor1d([...observation])
-			.reshape<tf.Tensor2D>([1, 4]);
+			.reshape<tf.Tensor2D>([1, env.numObservationDimensions]);
 		const output = this.network.predict(processedObservation) as tf.Tensor2D;
 		const squeezedOutput = output.squeeze<tf.Tensor1D>([0]);
 		const action = tf.multinomial(squeezedOutput, 1).dataSync()[0];
