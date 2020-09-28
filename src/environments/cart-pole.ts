@@ -1,27 +1,29 @@
 import { Environment, Observation, Sample } from "./core";
 
 export class CartPole implements Environment {
-	public name: string;
-	public winningScore: number;
-	public numObservationDimensions: number;
-	public numActions: number;
+	public readonly name: string;
+	public readonly winningScore: number;
+	public readonly numObservationDimensions: number;
+	public readonly numActions: number;
 
-	private state: readonly [number, number, number, number];
-	private gravity: number;
-	private massCart: number;
-	private massPole: number;
-	private totalMass: number;
-	private length: number;
-	private poleMoment: number;
-	private forceMagnitude: number;
-	private tau: number;
-	private thetaThresholdRadians: number;
-	private xThreshold: number;
+	private readonly gravity: number;
+	private readonly massCart: number;
+	private readonly massPole: number;
+	private readonly totalMass: number;
+	private readonly length: number;
+	private readonly poleMoment: number;
+	private readonly forceMagnitude: number;
+	private readonly tau: number;
+	private readonly thetaThresholdRadians: number;
+	private readonly xThreshold: number;
+
 	private done: boolean;
+	private state: readonly [number, number, number, number];
 
 	constructor() {
 		this.name = "CartPole";
 		this.winningScore = 195;
+		this.numObservationDimensions = 4;
 		this.numActions = 2;
 
 		this.gravity = 9.8;
@@ -37,11 +39,8 @@ export class CartPole implements Environment {
 		this.thetaThresholdRadians = (12 * 2 * Math.PI) / 360;
 		this.xThreshold = 2.4;
 
-		this.done = false;
-
+		this.done = true;
 		this.state = [0, 0, 0, 0];
-		this.numObservationDimensions = this.state.length;
-		this.reset();
 	}
 
 	public reset(): Observation {
@@ -56,6 +55,9 @@ export class CartPole implements Environment {
 	}
 
 	public step(action: number): Sample {
+		if (action >= this.numActions) {
+			throw new Error("Action is not in range");
+		}
 		if (this.done) {
 			throw new Error("Env is done");
 		}
