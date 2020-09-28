@@ -8,7 +8,8 @@ type Sample = {
 };
 
 export class CartPole {
-	public static winningScore = 195;
+	public name: string;
+	public winningScore: number;
 
 	private state: State;
 	private gravity: number;
@@ -24,6 +25,9 @@ export class CartPole {
 	private done: boolean;
 
 	constructor() {
+		this.name = "CartPole";
+		this.winningScore = 195;
+
 		this.gravity = 9.8;
 		this.massCart = 1.0;
 		this.massPole = 0.1;
@@ -39,7 +43,8 @@ export class CartPole {
 
 		this.done = false;
 
-		this.reset();
+		// assignment unnecessary but avoids compiler error
+		this.state = this.reset();
 	}
 
 	public reset(): Observation {
