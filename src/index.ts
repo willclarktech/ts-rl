@@ -1,10 +1,10 @@
-import { Reinforce } from "./agents";
+import { Agent, Reinforce } from "./agents";
 import { CartPole, Environment } from "./environments";
 import { logEpisode, mean } from "./util";
 
 const train = (
 	env: Environment,
-	agent: Reinforce,
+	agent: Agent,
 	maxEpisodes: number,
 	rollingAveragePeriod: number,
 	logPeriod: number,
@@ -43,24 +43,24 @@ const train = (
 };
 
 const main = (): void => {
-	const env = new CartPole();
+	const env: Environment = new CartPole();
 
 	const hiddenWidths = [4, 4];
 	const alpha = 0.001; // Learning rate
 	const gamma = 0.99; // Discount rate
-	const learner = new Reinforce(env, hiddenWidths, alpha, gamma);
+	const agent: Agent = new Reinforce(env, hiddenWidths, alpha, gamma);
 
 	const maxEpisodes = 1000;
 	const rollingAveragePeriod = 100;
 	const logPeriod = 100;
-	const experimentName = `${env.name}-${learner.name}`;
+	const experimentName = `${env.name}-${agent.name}`;
 	const logFile = `./results/data/${experimentName}.json`;
 
-	console.info("Score to beat:", env.winningScore);
+	console.info("Score to beat:", env.winningScore ?? "[not set]");
 
 	const didWin = train(
 		env,
-		learner,
+		agent,
 		maxEpisodes,
 		rollingAveragePeriod,
 		logPeriod,
