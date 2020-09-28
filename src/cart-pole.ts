@@ -1,15 +1,12 @@
+import { Environment, Observation, Sample } from "./core";
+
 type State = readonly [number, number, number, number];
-export type Observation = State;
 
-type Sample = {
-	readonly observation: Observation;
-	readonly reward: number;
-	readonly done: boolean;
-};
-
-export class CartPole {
+export class CartPole implements Environment {
 	public name: string;
 	public winningScore: number;
+	public numObservationDimensions: number;
+	public numActions: number;
 
 	private state: State;
 	private gravity: number;
@@ -27,6 +24,7 @@ export class CartPole {
 	constructor() {
 		this.name = "CartPole";
 		this.winningScore = 195;
+		this.numActions = 2;
 
 		this.gravity = 9.8;
 		this.massCart = 1.0;
@@ -43,8 +41,9 @@ export class CartPole {
 
 		this.done = false;
 
-		// assignment unnecessary but avoids compiler error
-		this.state = this.reset();
+		this.state = [0, 0, 0, 0];
+		this.numObservationDimensions = this.state.length;
+		this.reset();
 	}
 
 	public reset(): Observation {
