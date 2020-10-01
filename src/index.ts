@@ -1,4 +1,4 @@
-import { Agent, Reinforce } from "./agents";
+import { Agent, Random, Reinforce } from "./agents";
 import { Blackjack, CartPole, Environment } from "./environments";
 import { logEpisode, mean } from "./util";
 
@@ -42,20 +42,37 @@ const train = (
 	return false;
 };
 
-const main = (): void => {
-	const envs: { readonly [key: string]: () => Environment } = {
-		Blackjack: (): Environment => new Blackjack(),
-		CartPole: (): Environment => new CartPole(),
-	};
-	const userEnv = process.argv[2];
-	const createEnv: () => Environment =
-		envs[userEnv] ?? ((): Environment => new CartPole());
-	const env = createEnv();
+const envs: { readonly [key: string]: () => Environment } = {
+	blackjack: (): Environment => new Blackjack(),
+	cartpole: (): Environment => new CartPole(),
+};
 
-	const hiddenWidths = [8];
-	const alpha = 0.001; // Learning rate
-	const gamma = 0.99; // Discount rate
-	const agent: Agent = new Reinforce(env, hiddenWidths, alpha, gamma);
+const createAgent = (agentName: string, env: Environment): Agent => {
+	switch (agentName) {
+		case "random": {
+			return new Random(env);
+		}
+		case "reinforce": {
+			const hiddenWidths = [8];
+			const alpha = 0.001; // Learning rate
+			const gamma = 0.99; // Discount rate
+			return new Reinforce(env, hiddenWidths, alpha, gamma);
+		}
+		default:
+			throw new Error("Agent name not recognised");
+	}
+};
+
+const main = (): void => {
+	const environmentName = process.argv[2] ?? "cartpole";
+	const agentName = process.argv[3] ?? "reinforce";
+
+	const createEnv: () => Environment = envs[environmentName];
+	if (createEnv === undefined) {
+		throw new Error("Environment name not recognised");
+	}
+	const env = createEnv();
+	const agent = createAgent(agentName, env);
 
 	const maxEpisodes = 1000;
 	const rollingAveragePeriod = 100;
