@@ -2,15 +2,25 @@
 <html>
 	<head>
 		<title>TS-RL Results</title>
+		<link
+			rel="stylesheet"
+			href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+			integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+			crossorigin="anonymous"
+		/>
 		<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.0.0/dist/tf.min.js"></script>
 		<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-vis@1.0.2/dist/tfjs-vis.umd.min.js"></script>
 		<script src="index.js"></script>
 	</head>
 	<body>
-		<span>Pick the environment:</span>
-		<select id="environment">
-			<option value="Blackjack">Blackjack</option>
-			<option value="CartPole" selected>CartPole</option>
-		</select>
+		<div class="container">
+			<h1>Training Results</h1>
+			<div class="lead">Pick the environment and algorithm:</div>
+			<form id="environment-form" class="form-inline">
+				<select id="environment-name" class="form-control"></select>
+				<select id="algorithm-name" class="form-control"></select>
+				<button type="submit" class="btn btn-primary">Load</button>
+			</form>
+		</div>
 	</body>
 </html>

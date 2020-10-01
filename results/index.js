@@ -1,7 +1,17 @@
 /* globals document, XMLHttpRequest, tfvis */
 
-let currentExperimentName = "CartPole-Reinforce";
-let timeout = null;
+const environments = ["Blackjack", "CartPole"];
+
+const algorithms = ["Reinforce"];
+
+let state = {
+	environment: "CartPole",
+	algorithm: "Reinforce",
+	timeout: null,
+};
+
+const getExperimentName = ({ environment, algorithm }) =>
+	`${environment}-${algorithm}`;
 
 const loadJSON = async (path) => {
 	const xobj = new XMLHttpRequest();
@@ -19,7 +29,8 @@ const loadJSON = async (path) => {
 
 const convertToPoint = (y, x) => ({ x, y });
 
-async function run(experimentName) {
+async function run() {
+	const experimentName = getExperimentName(state);
 	const filePath = `data/${experimentName}.json`;
 	const { returns, rollingAverageReturns } = await loadJSON(filePath);
 	const returnsPoints = returns.map(convertToPoint);
@@ -39,17 +50,35 @@ async function run(experimentName) {
 		},
 	);
 
-	document.getElementById("environment").onchange = (event) => {
-		currentExperimentName = `${event.target.value}-Reinforce`;
-		if (timeout) {
-			clearTimeout(timeout);
-		}
-		run(currentExperimentName);
+	document.getElementById("environment-form").onsubmit = (event) => {
+		event.preventDefault();
+		state = {
+			environment: document.getElementById("environment-name").value,
+			algorithm: document.getElementById("algorithm-name").value,
+			timeout: state.timeout || clearTimeout(state.timeout),
+		};
+		run();
 	};
-	timeout = setTimeout(run.bind(null, currentExperimentName), 5000);
+	state = {
+		...state,
+		timeout: setTimeout(run, 5000),
+	};
 }
 
-document.addEventListener(
-	"DOMContentLoaded",
-	run.bind(null, currentExperimentName),
-);
+const onLoad = () => {
+	document.getElementById("environment-name").innerHTML = environments.map(
+		(environment) =>
+			`<option value="${environment}" ${
+				environment === state.environment ? "selected" : ""
+			}>${environment}</option>`,
+	);
+	document.getElementById("algorithm-name").innerHTML = algorithms.map(
+		(algorithm) =>
+			`<option value=${algorithm} ${
+				algorithm === state.algorithm ? "selected" : ""
+			}>${algorithm}</option>`,
+	);
+	run();
+};
+
+document.addEventListener("DOMContentLoaded", onLoad);
