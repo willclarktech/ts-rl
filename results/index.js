@@ -2,7 +2,7 @@
 
 const environments = ["Blackjack", "CartPole"];
 
-const algorithms = ["Reinforce"];
+const algorithms = ["DQN", "Random", "Reinforce"];
 
 let state = {
 	environment: "CartPole",
