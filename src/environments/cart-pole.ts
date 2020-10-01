@@ -20,7 +20,7 @@ export class CartPole implements Environment {
 	private done: boolean;
 	private state: readonly [number, number, number, number];
 
-	constructor() {
+	public constructor() {
 		this.name = "CartPole";
 		this.winningScore = 195;
 		this.numObservationDimensions = 4;

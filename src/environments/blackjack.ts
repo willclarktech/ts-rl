@@ -57,7 +57,7 @@ export class Blackjack implements Environment {
 	private dealer: Hand;
 	private player: Hand;
 
-	constructor(natural = false) {
+	public constructor(natural = false) {
 		this.name = "Blackjack";
 		this.numObservationDimensions = 3;
 		this.numActions = 2;

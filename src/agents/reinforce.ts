@@ -46,7 +46,7 @@ export class Reinforce implements Agent {
 	private readonly network: tf.Sequential;
 	private readonly optimizer: tf.Optimizer;
 
-	constructor(
+	public constructor(
 		{ numObservationDimensions, numActions }: Environment,
 		hiddenWidths: readonly number[],
 		alpha: number,
