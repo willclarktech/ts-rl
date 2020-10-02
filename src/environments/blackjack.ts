@@ -48,6 +48,7 @@ const shuffleDeck = (deck: Deck = unshuffledDeck): Deck => {
 
 export class Blackjack implements Environment {
 	public readonly name: string;
+	public readonly winningScore: number;
 	public readonly numObservationDimensions: number;
 	public readonly numActions: number;
 	public readonly natural: boolean;
@@ -59,6 +60,7 @@ export class Blackjack implements Environment {
 
 	public constructor(natural = false) {
 		this.name = "Blackjack";
+		this.winningScore = 0;
 		this.numObservationDimensions = 3;
 		this.numActions = 2;
 		this.natural = natural;
