@@ -17,6 +17,7 @@ export class DQN implements Agent {
 	private readonly minibatchSize: number;
 	private readonly qNetwork: tf.Sequential;
 	private readonly optimizer: tf.Optimizer;
+	private readonly targetNetworkUpdatePeriod: number;
 
 	private epsilon: number;
 	private targetNetwork: tf.Sequential;
@@ -31,6 +32,7 @@ export class DQN implements Agent {
 		epsilonReduction: number, // exploration rate reduction per action
 		replayMemoryCapacity: number,
 		minibatchSize: number,
+		targetNetworkUpdatePeriod: number,
 	) {
 		this.name = "DQN";
 		this.gamma = gamma;
@@ -41,9 +43,14 @@ export class DQN implements Agent {
 		this.replayMemory = new ReplayMemory(replayMemoryCapacity);
 		this.minibatchSize = minibatchSize;
 		this.optimizer = tf.train.adam(alpha);
+		this.targetNetworkUpdatePeriod = targetNetworkUpdatePeriod;
 		const widths = [numObservationDimensions, ...hiddenWidths, numActions];
 		this.qNetwork = createNetwork(widths, "relu", "softmax");
 		this.targetNetwork = createNetwork(widths, "relu", "softmax");
+		this.updateTargetNetwork();
+	}
+
+	private updateTargetNetwork(): void {
 		this.targetNetwork.setWeights(
 			this.qNetwork.weights.map((weight) => weight.read()),
 		);
@@ -70,9 +77,11 @@ export class DQN implements Agent {
 		let observation = env.reset();
 		let done = false;
 		let rewards: readonly number[] = [];
+		let step = 0;
 
 		tf.tidy(() => {
 			while (!done) {
+				step += 1;
 				const action = this.act(observation);
 				const {
 					observation: nextObservation,
@@ -128,6 +137,10 @@ export class DQN implements Agent {
 
 						return tf.losses.meanSquaredError(targets, predictions);
 					});
+
+					if ((step + 1) % this.targetNetworkUpdatePeriod) {
+						this.updateTargetNetwork();
+					}
 				}
 
 				rewards = [...rewards, reward];
