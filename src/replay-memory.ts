@@ -26,9 +26,25 @@ export class ReplayMemory {
 	}
 
 	public sample(n: number): readonly Transition[] {
-		return Array.from(
-			{ length: n },
-			() => this.transitions[sampleUniform(this.transitions.length)],
-		);
+		const initialSample: readonly Transition[] = [];
+		return Array.from({ length: n }).reduce(
+			({
+				sample,
+				transitions,
+			}): {
+				readonly sample: readonly Transition[];
+				readonly transitions: readonly Transition[];
+			} => {
+				const i = sampleUniform(transitions.length);
+				return {
+					sample: [...sample, transitions[i]],
+					transitions: [
+						...transitions.slice(0, i),
+						...transitions.slice(i + 1),
+					],
+				};
+			},
+			{ sample: initialSample, transitions: this.transitions },
+		).sample;
 	}
 }
