@@ -1,4 +1,4 @@
-import { Agent, Random, Reinforce } from "./agents";
+import { Agent, DQN, Random, Reinforce } from "./agents";
 import { Blackjack, CartPole, Environment } from "./environments";
 import { logEpisode, mean } from "./util";
 
@@ -49,6 +49,21 @@ const envs: { readonly [key: string]: () => Environment } = {
 
 const createAgent = (agentName: string, env: Environment): Agent => {
 	switch (agentName) {
+		case "dqn": {
+			const hiddenWidths = [4];
+			const alpha = 0.001;
+			const gamma = 0.99;
+			const replayMemoryCapacity = 128;
+			const minibatchSize = 32;
+			return new DQN(
+				env,
+				hiddenWidths,
+				alpha,
+				gamma,
+				replayMemoryCapacity,
+				minibatchSize,
+			);
+		}
 		case "random": {
 			return new Random(env);
 		}
