@@ -1,6 +1,6 @@
 import { Agent, DQN, Random, Reinforce } from "./agents";
 import { Blackjack, CartPole, Environment } from "./environments";
-import { logEpisode, mean } from "./util";
+import { getTimeString, logEpisode, mean } from "./util";
 
 const train = (
 	env: Environment,
@@ -50,16 +50,22 @@ const envs: { readonly [key: string]: () => Environment } = {
 const createAgent = (agentName: string, env: Environment): Agent => {
 	switch (agentName) {
 		case "dqn": {
-			const hiddenWidths = [4];
-			const alpha = 0.001;
+			const hiddenWidths = [8];
+			const alpha = 0.0001;
 			const gamma = 0.99;
-			const replayMemoryCapacity = 128;
+			const epsilonInitial = 1;
+			const epsilonMinimum = 0.01;
+			const epsilonReduction = 0.001;
+			const replayMemoryCapacity = 512;
 			const minibatchSize = 32;
 			return new DQN(
 				env,
 				hiddenWidths,
 				alpha,
 				gamma,
+				epsilonInitial,
+				epsilonMinimum,
+				epsilonReduction,
 				replayMemoryCapacity,
 				minibatchSize,
 			);
@@ -68,8 +74,8 @@ const createAgent = (agentName: string, env: Environment): Agent => {
 			return new Random(env);
 		}
 		case "reinforce": {
-			const hiddenWidths = [8];
-			const alpha = 0.001;
+			const hiddenWidths = [24];
+			const alpha = 0.01;
 			const gamma = 0.99;
 			return new Reinforce(env, hiddenWidths, alpha, gamma);
 		}
@@ -91,11 +97,13 @@ const main = (): void => {
 
 	const maxEpisodes = 1000;
 	const rollingAveragePeriod = 100;
-	const logPeriod = 100;
+	const logPeriod = 10;
 	const experimentName = `${env.name}-${agent.name}`;
 	const logFile = `./results/data/${experimentName}.json`;
 
-	console.info("Score to beat:", env.winningScore ?? "[not set]");
+	console.info(
+		`${getTimeString()} - Score to beat: ${env.winningScore ?? "[not set]"}`,
+	);
 
 	const didWin = train(
 		env,
