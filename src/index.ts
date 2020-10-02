@@ -54,8 +54,8 @@ const createAgent = (agentName: string, env: Environment): Agent => {
 		}
 		case "reinforce": {
 			const hiddenWidths = [8];
-			const alpha = 0.001; // Learning rate
-			const gamma = 0.99; // Discount rate
+			const alpha = 0.001;
+			const gamma = 0.99;
 			return new Reinforce(env, hiddenWidths, alpha, gamma);
 		}
 		default:

@@ -49,8 +49,8 @@ export class Reinforce implements Agent {
 	public constructor(
 		{ numObservationDimensions, numActions }: Environment,
 		hiddenWidths: readonly number[],
-		alpha: number,
-		gamma: number,
+		alpha: number, // learning rate
+		gamma: number, // discount rate
 	) {
 		this.name = "Reinforce";
 		this.gamma = gamma;
