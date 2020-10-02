@@ -85,8 +85,8 @@ const createAgent = (agentName: string, env: Environment): Agent => {
 };
 
 const main = (): void => {
-	const environmentName = process.argv[2] ?? "cartpole";
-	const agentName = process.argv[3] ?? "reinforce";
+	const agentName = process.argv[2] ?? "reinforce";
+	const environmentName = process.argv[3] ?? "cartpole";
 
 	const createEnv: () => Environment = envs[environmentName];
 	if (createEnv === undefined) {
@@ -98,7 +98,7 @@ const main = (): void => {
 	const maxEpisodes = 1000;
 	const rollingAveragePeriod = 100;
 	const logPeriod = 10;
-	const experimentName = `${env.name}-${agent.name}`;
+	const experimentName = `${agent.name}-${env.name}`;
 	const logFile = `./results/data/${experimentName}.json`;
 
 	console.info(

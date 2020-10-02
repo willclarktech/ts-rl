@@ -1,17 +1,16 @@
 /* globals document, XMLHttpRequest, tfvis */
 
+const algorithms = ["DQN", "Random", "Reinforce"];
 const environments = ["Blackjack", "CartPole"];
 
-const algorithms = ["DQN", "Random", "Reinforce"];
-
 let state = {
-	environment: "CartPole",
-	algorithm: "Reinforce",
+	algorithm: "DQN",
+	environment: "Blackjack",
 	timeout: null,
 };
 
-const getExperimentName = ({ environment, algorithm }) =>
-	`${environment}-${algorithm}`;
+const getExperimentName = ({ algorithm, environment }) =>
+	`${algorithm}-${environment}`;
 
 const loadJSON = async (path) => {
 	const xobj = new XMLHttpRequest();
@@ -50,15 +49,6 @@ async function run() {
 		},
 	);
 
-	document.getElementById("environment-form").onsubmit = (event) => {
-		event.preventDefault();
-		state = {
-			environment: document.getElementById("environment-name").value,
-			algorithm: document.getElementById("algorithm-name").value,
-			timeout: state.timeout || clearTimeout(state.timeout),
-		};
-		run();
-	};
 	state = {
 		...state,
 		timeout: setTimeout(run, 5000),
@@ -66,19 +56,27 @@ async function run() {
 }
 
 const onLoad = () => {
-	document.getElementById("environment-name").innerHTML = environments.map(
-		(environment) =>
-			`<option value="${environment}" ${
-				environment === state.environment ? "selected" : ""
-			}>${environment}</option>`,
-	);
 	document.getElementById("algorithm-name").innerHTML = algorithms.map(
 		(algorithm) =>
 			`<option value=${algorithm} ${
 				algorithm === state.algorithm ? "selected" : ""
 			}>${algorithm}</option>`,
 	);
-	run();
+	document.getElementById("environment-name").innerHTML = environments.map(
+		(environment) =>
+			`<option value="${environment}" ${
+				environment === state.environment ? "selected" : ""
+			}>${environment}</option>`,
+	);
+	document.getElementById("environment-form").onsubmit = (event) => {
+		event.preventDefault();
+		state = {
+			algorithm: document.getElementById("algorithm-name").value,
+			environment: document.getElementById("environment-name").value,
+			timeout: state.timeout || clearTimeout(state.timeout),
+		};
+		run();
+	};
 };
 
 document.addEventListener("DOMContentLoaded", onLoad);
