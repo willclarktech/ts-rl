@@ -4,7 +4,7 @@ const algorithms = ["DQN", "Random", "Reinforce"];
 const environments = ["Blackjack", "CartPole"];
 
 let state = {
-	algorithm: "DQN",
+	algorithm: "Random",
 	environment: "Blackjack",
 	timeout: null,
 };
