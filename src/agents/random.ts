@@ -1,5 +1,5 @@
 import { Environment } from "../environments";
-import { sum } from "../util";
+import { sampleUniform, sum } from "../util";
 import { Agent } from "./core";
 
 export class Random implements Agent {
@@ -17,7 +17,7 @@ export class Random implements Agent {
 		let rewards: readonly number[] = [];
 
 		while (!done) {
-			const action = Math.floor(Math.random() * this.numActions);
+			const action = sampleUniform(this.numActions);
 			const sample = env.step(action);
 			({ done } = sample);
 			rewards = [...rewards, sample.reward];
