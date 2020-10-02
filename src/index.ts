@@ -50,14 +50,15 @@ const envs: { readonly [key: string]: () => Environment } = {
 const createAgent = (agentName: string, env: Environment): Agent => {
 	switch (agentName) {
 		case "dqn": {
-			const hiddenWidths = [8];
+			const hiddenWidths = [24];
 			const alpha = 0.0001;
 			const gamma = 0.99;
 			const epsilonInitial = 1;
 			const epsilonMinimum = 0.01;
-			const epsilonReduction = 0.001;
+			const epsilonReduction = 0.0001;
 			const replayMemoryCapacity = 512;
 			const minibatchSize = 32;
+			const targetNetworkUpdatePeriod = 1;
 			return new DQN(
 				env,
 				hiddenWidths,
@@ -68,6 +69,7 @@ const createAgent = (agentName: string, env: Environment): Agent => {
 				epsilonReduction,
 				replayMemoryCapacity,
 				minibatchSize,
+				targetNetworkUpdatePeriod,
 			);
 		}
 		case "random": {
