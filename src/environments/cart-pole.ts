@@ -16,7 +16,9 @@ export class CartPole implements Environment {
 	private readonly tau: number;
 	private readonly thetaThresholdRadians: number;
 	private readonly xThreshold: number;
+	private readonly maxEpisodeLength: number;
 
+	private steps: number;
 	private done: boolean;
 	private state: readonly [number, number, number, number];
 
@@ -39,6 +41,9 @@ export class CartPole implements Environment {
 		this.thetaThresholdRadians = (12 * 2 * Math.PI) / 360;
 		this.xThreshold = 2.4;
 
+		this.maxEpisodeLength = 200;
+
+		this.steps = 0;
 		this.done = true;
 		this.state = [0, 0, 0, 0];
 	}
@@ -49,6 +54,7 @@ export class CartPole implements Environment {
 		const theta = (Math.random() - 0.5) * 2 * ((6 / 360) * 2 * Math.PI); // pole angle (radians)
 		const thetaDot = (Math.random() - 0.5) * 0.5; // pole anguular velocity
 
+		this.steps = 0;
 		this.state = [x, xDot, theta, thetaDot];
 		this.done = false;
 		return this.state;
@@ -82,8 +88,10 @@ export class CartPole implements Environment {
 		const thetaNext = theta + this.tau * thetaDot;
 		const thetaDotNext = thetaDot + this.tau * thetaAcceleration;
 
+		this.steps += 1;
 		this.state = [xNext, xDotNext, thetaNext, thetaDotNext];
 		this.done =
+			this.steps >= this.maxEpisodeLength ||
 			xNext < -this.xThreshold ||
 			xNext > this.xThreshold ||
 			thetaNext < -this.thetaThresholdRadians ||
