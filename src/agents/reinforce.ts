@@ -60,11 +60,12 @@ export class Reinforce implements Agent {
 	}
 
 	private getSample(env: Environment, observation: Observation): Sample {
-		const processedObservation = tf
-			.tensor1d([...observation])
-			.reshape<tf.Tensor2D>([1, env.numObservationDimensions]);
+		const processedObservation = tf.tensor2d(
+			[...observation],
+			[1, observation.length],
+		);
 		const output = this.network.predict(processedObservation) as tf.Tensor2D;
-		const squeezedOutput = output.squeeze<tf.Tensor1D>([0]);
+		const squeezedOutput = output.squeeze<tf.Tensor1D>();
 		const action = tf.multinomial(squeezedOutput, 1).dataSync()[0];
 		const logProbability = tf.log(squeezedOutput.gather([action]));
 		const { observation: nextObservation, reward, done } = env.step(action);
