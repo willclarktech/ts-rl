@@ -34,6 +34,19 @@ export const createNetwork = (
 	return network;
 };
 
+const padTimeComponent = (component: number): string => {
+	const componentString = component.toString();
+	return componentString.length === 1 ? `0${componentString}` : componentString;
+};
+
+export const getTimeString = (): string => {
+	const date = new Date();
+	// .toLocaleTimeString() doesn't seem to work in Node.js :(
+	return [date.getHours(), date.getMinutes(), date.getSeconds()]
+		.map(padTimeComponent)
+		.join(":");
+};
+
 export const logEpisode = (
 	episode: number,
 	returns: readonly number[],
@@ -53,7 +66,7 @@ export const logEpisode = (
 	}
 
 	console.info(
-		`Episode ${episode} - Rolling average return (${rollingAveragePeriod} episodes):`,
+		`${getTimeString()} - Episode ${episode} - Rolling average return (${rollingAveragePeriod} episodes):`,
 		rollingAverageReturns.slice(-1)[0],
 	);
 };
