@@ -3,29 +3,41 @@ import * as tf from "@tensorflow/tfjs-node";
 import { Environment, Observation } from "../environments";
 import { gatherND } from "../operations";
 import { ReplayMemory } from "../replay-memory";
-import { createNetwork, sum } from "../util";
+import { createNetwork, sampleUniform, sum } from "../util";
 import { Agent } from "./core";
 
 export class DQN implements Agent {
 	public readonly name: string;
 
 	private readonly gamma: number;
+	private readonly epsilonMinimum: number;
+	private readonly epsilonReduction: number;
+	private readonly numActions: number;
 	private readonly replayMemory: ReplayMemory;
 	private readonly minibatchSize: number;
 	private readonly qNetwork: tf.Sequential;
-	private targetNetwork: tf.Sequential;
 	private readonly optimizer: tf.Optimizer;
+
+	private epsilon: number;
+	private targetNetwork: tf.Sequential;
 
 	public constructor(
 		{ numObservationDimensions, numActions }: Environment,
 		hiddenWidths: readonly number[],
 		alpha: number, // learning rate
 		gamma: number, // discount rate
+		epsilonInitial: number, // initial exploration rate
+		epsilonMinimum: number, // minimum exploration rate
+		epsilonReduction: number, // exploration rate reduction per action
 		replayMemoryCapacity: number,
 		minibatchSize: number,
 	) {
 		this.name = "DQN";
 		this.gamma = gamma;
+		this.epsilon = epsilonInitial;
+		this.epsilonMinimum = epsilonMinimum;
+		this.epsilonReduction = epsilonReduction;
+		this.numActions = numActions;
 		this.replayMemory = new ReplayMemory(replayMemoryCapacity);
 		this.minibatchSize = minibatchSize;
 		this.optimizer = tf.train.adam(alpha);
@@ -38,10 +50,20 @@ export class DQN implements Agent {
 	}
 
 	private act(observation: Observation): number {
+		const shouldActRandom = Math.random() < this.epsilon;
+		this.epsilon = Math.max(
+			this.epsilonMinimum,
+			this.epsilon - this.epsilonReduction,
+		);
+
+		if (shouldActRandom) {
+			return sampleUniform(this.numActions);
+		}
+
 		const output = this.qNetwork.predict(
 			tf.tensor2d([...observation], [1, observation.length]),
-		) as tf.Tensor1D;
-		return output.argMax().dataSync()[0];
+		) as tf.Tensor2D;
+		return output.argMax(-1).dataSync()[0];
 	}
 
 	public runEpisode(env: Environment): number {
