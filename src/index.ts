@@ -1,6 +1,6 @@
 import { Agent, DQN, Random, Reinforce } from "./agents";
-import { DQNOptions } from "./agents/dqn";
 import { Blackjack, CartPole, Environment } from "./environments";
+import * as options from "./options";
 import { getTimeString, logEpisode, mean } from "./util";
 
 const train = (
@@ -44,49 +44,43 @@ const train = (
 	return false;
 };
 
-const envs: { readonly [key: string]: () => Environment } = {
-	blackjack: (): Environment => new Blackjack(),
-	cartpole: (): Environment => new CartPole(),
+const createEnv = (environmentName: string): Environment => {
+	switch (environmentName) {
+		case "blackjack":
+			return new Blackjack();
+		case "cartpole":
+			return new CartPole();
+		default:
+			throw new Error("Environment name not recognised");
+	}
+};
+
+const verifyAgentOptions = (
+	agentOptions: unknown,
+	agentName: string,
+	environmentName: string,
+): void => {
+	if (agentOptions === undefined) {
+		throw new Error(
+			`Options not specified for ${agentName} in ${environmentName}`,
+		);
+	}
 };
 
 const createAgent = (agentName: string, env: Environment): Agent => {
 	switch (agentName) {
 		case "dqn": {
-			const _blackjackOptions: DQNOptions = {
-				hiddenWidths: [2],
-				alpha: 0.03,
-				gamma: 0.99,
-				epsilonInitial: 1,
-				epsilonMinimum: 0.01,
-				epsilonReduction: 0.001,
-				shouldClipLoss: true,
-				replayMemoryCapacity: 512,
-				minibatchSize: 32,
-				targetNetworkUpdatePeriod: 1,
-			};
-			const _cartPoleOptions: DQNOptions = {
-				hiddenWidths: [2],
-				alpha: 0.01,
-				gamma: 0.99,
-				epsilonInitial: 1,
-				epsilonMinimum: 0.01,
-				epsilonReduction: 0.0001,
-				shouldClipLoss: true,
-				replayMemoryCapacity: 1024,
-				minibatchSize: 32,
-				targetNetworkUpdatePeriod: 2,
-			};
-
-			return new DQN(env, _cartPoleOptions);
+			const dqnOptions = options.DQN[env.name];
+			verifyAgentOptions(dqnOptions, agentName, env.name);
+			return new DQN(env, dqnOptions);
 		}
 		case "random": {
 			return new Random(env);
 		}
 		case "reinforce": {
-			const hiddenWidths = [8];
-			const alpha = 0.01;
-			const gamma = 0.99;
-			return new Reinforce(env, hiddenWidths, alpha, gamma);
+			const reinforceOptions = options.Reinforce[env.name];
+			verifyAgentOptions(reinforceOptions, agentName, env.name);
+			return new Reinforce(env, reinforceOptions);
 		}
 		default:
 			throw new Error("Agent name not recognised");
@@ -97,11 +91,7 @@ const main = (): void => {
 	const agentName = process.argv[2] ?? "reinforce";
 	const environmentName = process.argv[3] ?? "cartpole";
 
-	const createEnv: () => Environment = envs[environmentName];
-	if (createEnv === undefined) {
-		throw new Error("Environment name not recognised");
-	}
-	const env = createEnv();
+	const env = createEnv(environmentName);
 	const agent = createAgent(agentName, env);
 
 	const maxEpisodes = 1000;
@@ -126,5 +116,4 @@ const main = (): void => {
 	console.info(didWin ? "You won!" : "You lost.");
 };
 
-// Run with eg `npm start [Blackjack]`
 main();
