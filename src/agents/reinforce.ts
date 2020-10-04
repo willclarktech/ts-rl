@@ -39,6 +39,12 @@ type Sample = {
 	readonly logProbability: tf.Tensor1D;
 };
 
+export interface ReinforceOptions {
+	readonly hiddenWidths: readonly number[];
+	readonly alpha: number; // learning rate
+	readonly gamma: number; // discount rate
+}
+
 export class Reinforce implements Agent {
 	public readonly name: string;
 
@@ -48,9 +54,7 @@ export class Reinforce implements Agent {
 
 	public constructor(
 		{ numObservationDimensions, numActions }: Environment,
-		hiddenWidths: readonly number[],
-		alpha: number, // learning rate
-		gamma: number, // discount rate
+		{ hiddenWidths, alpha, gamma }: ReinforceOptions,
 	) {
 		this.name = "Reinforce";
 		this.gamma = gamma;
