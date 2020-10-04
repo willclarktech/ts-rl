@@ -116,7 +116,7 @@ export class DQN implements Agent {
 		);
 	}
 
-	private calculateLoss(
+	private getLoss(
 		minibatch: readonly Transition[],
 		targets: tf.Tensor1D,
 	): tf.Scalar {
@@ -136,6 +136,17 @@ export class DQN implements Agent {
 
 		const loss = tf.losses.meanSquaredError(targets, predictions) as tf.Scalar;
 		return this.shouldClipLoss ? (loss.clipByValue(-1, 1) as tf.Scalar) : loss;
+	}
+
+	private learn(): void {
+		const minibatch = this.replayMemory.sample(this.minibatchSize);
+		const targets = this.getTargetsFromMinibatch(minibatch);
+
+		this.optimizer.minimize(() => this.getLoss(minibatch, targets));
+
+		if ((this.steps + 1) % this.targetNetworkUpdatePeriod === 0) {
+			this.synchroniseTargetNetwork();
+		}
 	}
 
 	public runEpisode(env: Environment): number {
@@ -162,14 +173,7 @@ export class DQN implements Agent {
 				});
 
 				if (this.replayMemory.size >= this.minibatchSize) {
-					const minibatch = this.replayMemory.sample(this.minibatchSize);
-					const targets = this.getTargetsFromMinibatch(minibatch);
-
-					this.optimizer.minimize(() => this.calculateLoss(minibatch, targets));
-
-					if ((this.steps + 1) % this.targetNetworkUpdatePeriod === 0) {
-						this.synchroniseTargetNetwork();
-					}
+					this.learn();
 				}
 
 				rewards = [...rewards, reward];
