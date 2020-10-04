@@ -1,4 +1,5 @@
 import { Agent, DQN, Random, Reinforce } from "./agents";
+import { DQNOptions } from "./agents/dqn";
 import { Blackjack, CartPole, Environment } from "./environments";
 import { getTimeString, logEpisode, mean } from "./util";
 
@@ -20,7 +21,12 @@ const train = (
 		const rollingAverageReturn = mean(returns.slice(-100));
 		rollingAverageReturns.push(rollingAverageReturn);
 
-		if (episode % logPeriod === 0) {
+		const didWin =
+			env.winningScore !== undefined &&
+			episode >= rollingAveragePeriod &&
+			rollingAverageReturn >= env.winningScore;
+
+		if (episode % logPeriod === 0 || didWin) {
 			logEpisode(
 				episode,
 				returns,
@@ -30,11 +36,7 @@ const train = (
 			);
 		}
 
-		if (
-			env.winningScore !== undefined &&
-			episode >= rollingAveragePeriod &&
-			rollingAverageReturn >= env.winningScore
-		) {
+		if (didWin) {
 			return true;
 		}
 	}
@@ -50,33 +52,38 @@ const envs: { readonly [key: string]: () => Environment } = {
 const createAgent = (agentName: string, env: Environment): Agent => {
 	switch (agentName) {
 		case "dqn": {
-			const hiddenWidths = [24];
-			const alpha = 0.0001;
-			const gamma = 0.99;
-			const epsilonInitial = 1;
-			const epsilonMinimum = 0.01;
-			const epsilonReduction = 0.0001;
-			const replayMemoryCapacity = 512;
-			const minibatchSize = 32;
-			const targetNetworkUpdatePeriod = 1;
-			return new DQN(
-				env,
-				hiddenWidths,
-				alpha,
-				gamma,
-				epsilonInitial,
-				epsilonMinimum,
-				epsilonReduction,
-				replayMemoryCapacity,
-				minibatchSize,
-				targetNetworkUpdatePeriod,
-			);
+			const _blackjackOptions: DQNOptions = {
+				hiddenWidths: [2],
+				alpha: 0.03,
+				gamma: 0.99,
+				epsilonInitial: 1,
+				epsilonMinimum: 0.01,
+				epsilonReduction: 0.001,
+				shouldClipLoss: true,
+				replayMemoryCapacity: 512,
+				minibatchSize: 32,
+				targetNetworkUpdatePeriod: 1,
+			};
+			const _cartPoleOptions: DQNOptions = {
+				hiddenWidths: [2],
+				alpha: 0.01,
+				gamma: 0.99,
+				epsilonInitial: 1,
+				epsilonMinimum: 0.01,
+				epsilonReduction: 0.0001,
+				shouldClipLoss: true,
+				replayMemoryCapacity: 1024,
+				minibatchSize: 32,
+				targetNetworkUpdatePeriod: 2,
+			};
+
+			return new DQN(env, _cartPoleOptions);
 		}
 		case "random": {
 			return new Random(env);
 		}
 		case "reinforce": {
-			const hiddenWidths = [24];
+			const hiddenWidths = [8];
 			const alpha = 0.01;
 			const gamma = 0.99;
 			return new Reinforce(env, hiddenWidths, alpha, gamma);
