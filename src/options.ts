@@ -20,11 +20,11 @@ export const DQN: AgentOptions<DQNOptions> = {
 	},
 	CartPole: {
 		hiddenWidths: [2],
-		alpha: 0.003,
+		alpha: 0.0003,
 		gamma: 0.99,
 		epsilonInitial: 1,
 		epsilonMinimum: 0.01,
-		epsilonReduction: 0.0001,
+		epsilonReduction: 0.001,
 		shouldClipLoss: true,
 		replayMemoryCapacity: 512,
 		minibatchSize: 32,
