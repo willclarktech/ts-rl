@@ -1,26 +1,26 @@
 import { Environment, Observation, Sample } from "./core";
 
-export class CartPole implements Environment {
+export class CartPoleBase implements Environment {
 	public readonly name: string;
 	public readonly winningScore: number;
 	public readonly numObservationDimensions: number;
 	public readonly numActions: number;
 
-	private readonly gravity: number;
-	private readonly massCart: number;
-	private readonly massPole: number;
-	private readonly totalMass: number;
-	private readonly length: number;
-	private readonly poleMoment: number;
-	private readonly forceMagnitude: number;
-	private readonly tau: number;
-	private readonly thetaThresholdRadians: number;
-	private readonly xThreshold: number;
-	private readonly maxEpisodeLength: number;
+	protected readonly gravity: number;
+	protected readonly massCart: number;
+	protected readonly massPole: number;
+	protected readonly totalMass: number;
+	protected readonly length: number;
+	protected readonly poleMoment: number;
+	protected readonly forceMagnitude: number;
+	protected readonly tau: number;
+	protected readonly thetaThresholdRadians: number;
+	protected readonly xThreshold: number;
+	protected readonly maxEpisodeLength: number;
 
-	private steps: number;
-	private done: boolean;
-	private state: readonly [number, number, number, number];
+	protected steps: number;
+	protected done: boolean;
+	protected state: readonly [number, number, number, number];
 
 	public constructor() {
 		this.name = "CartPole";
@@ -101,6 +101,48 @@ export class CartPole implements Environment {
 			observation: this.state,
 			reward: 1,
 			done: this.done,
+		};
+	}
+}
+
+export class CartPole extends CartPoleBase {
+	public readonly winningScore: number;
+	public readonly numObservationDimensions: number;
+
+	private readonly baseReward: number;
+	private readonly winReward: number;
+	private readonly failReward: number;
+
+	public constructor() {
+		super();
+		this.winningScore = -6; // 195 - 201
+		this.numObservationDimensions = 5;
+
+		this.baseReward = 1;
+		this.winReward = 2;
+		this.failReward = -200;
+	}
+
+	public reset(): Observation {
+		const baseObservation = super.reset();
+		const didLose = false;
+		return [...baseObservation, Number(didLose)];
+	}
+
+	public step(action: number): Sample {
+		const baseSample = super.step(action);
+		const maxWasReached = this.steps >= this.maxEpisodeLength;
+		const didLose = baseSample.done && !maxWasReached;
+		const reward = maxWasReached
+			? this.winReward
+			: didLose
+			? this.failReward
+			: this.baseReward;
+
+		return {
+			observation: [...baseSample.observation, Number(didLose)],
+			reward,
+			done: baseSample.done,
 		};
 	}
 }
