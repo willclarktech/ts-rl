@@ -60,7 +60,7 @@ export class DQN implements Agent {
 		this.numActions = numActions;
 		this.replayMemory = new ReplayMemory(replayMemoryCapacity);
 		this.minibatchSize = minibatchSize;
-		this.optimizer = tf.train.adam(alpha);
+		this.optimizer = tf.train.sgd(alpha);
 		this.shouldClipLoss = shouldClipLoss;
 		this.targetNetworkUpdatePeriod = targetNetworkUpdatePeriod;
 		const widths = [numObservationDimensions, ...hiddenWidths, numActions];
