@@ -14,13 +14,20 @@
 	</head>
 	<body>
 		<div class="container">
-			<h1>Training Results</h1>
-			<div class="lead">Pick the environment and algorithm:</div>
-			<form id="environment-form" class="form-inline">
-				<select id="algorithm-name" class="form-control"></select>
-				<select id="environment-name" class="form-control"></select>
-				<button type="submit" class="btn btn-primary">Load</button>
-			</form>
+			<div class="row">
+				<h1>Training Results</h1>
+				<div class="lead">Pick the environment and algorithm:</div>
+			</div>
+			<div class="row">
+				<form id="environment-form" class="form-inline">
+					<select id="algorithm-name" class="form-control"></select>
+					<select id="environment-name" class="form-control"></select>
+					<button type="submit" class="btn btn-primary">Load</button>
+				</form>
+			</div>
+			<div class="row">
+				<p id="error" class="text-danger"></p>
+			</div>
 		</div>
 	</body>
 </html>

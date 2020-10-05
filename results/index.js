@@ -16,10 +16,14 @@ const loadJSON = async (path) => {
 	const xobj = new XMLHttpRequest();
 	xobj.overrideMimeType("application/json");
 	xobj.open("GET", path, true);
-	return new Promise((resolve) => {
+	return new Promise((resolve, reject) => {
 		xobj.onreadystatechange = () => {
-			if (xobj.readyState === 4 && xobj.status === 200) {
-				resolve(JSON.parse(xobj.responseText));
+			if (xobj.readyState === 4) {
+				if (xobj.status === 200) {
+					resolve(JSON.parse(xobj.responseText));
+				} else if (xobj.status >= 400) {
+					reject("Error loading JSON");
+				}
 			}
 		};
 		xobj.send(null);
@@ -28,31 +32,41 @@ const loadJSON = async (path) => {
 
 const convertToPoint = (y, x) => ({ x, y });
 
+const setError = (error) =>
+	(document.getElementById("error").innerText = error || "");
+
 async function run() {
+	setError();
 	const experimentName = getExperimentName(state);
 	const filePath = `data/${experimentName}.json`;
-	const { returns, rollingAverageReturns } = await loadJSON(filePath);
-	const returnsPoints = returns.map(convertToPoint);
-	const rollingAverageReturnsPoints = rollingAverageReturns.map(convertToPoint);
+	try {
+		const { returns, rollingAverageReturns } = await loadJSON(filePath);
+		const returnsPoints = returns.map(convertToPoint);
+		const rollingAverageReturnsPoints = rollingAverageReturns.map(
+			convertToPoint,
+		);
 
-	tfvis.visor().open();
-	tfvis.render.linechart(
-		{ name: "visor" },
-		{
-			values: [returnsPoints, rollingAverageReturnsPoints],
-			series: ["returns", "rolling average return (100 episodes)"],
-		},
-		{
-			xLabel: "episode",
-			yLabel: "return",
-			height: 500,
-		},
-	);
+		tfvis.visor().open();
+		tfvis.render.linechart(
+			{ name: "visor" },
+			{
+				values: [returnsPoints, rollingAverageReturnsPoints],
+				series: ["returns", "rolling average return (100 episodes)"],
+			},
+			{
+				xLabel: "episode",
+				yLabel: "return",
+				height: 500,
+			},
+		);
 
-	state = {
-		...state,
-		timeout: setTimeout(run, 5000),
-	};
+		state = {
+			...state,
+			timeout: setTimeout(run, 5000),
+		};
+	} catch (error) {
+		setError(error);
+	}
 }
 
 const onLoad = () => {
