@@ -39,13 +39,16 @@ const padTimeComponent = (component: number): string => {
 	return componentString.length === 1 ? `0${componentString}` : componentString;
 };
 
-export const getTimeString = (): string => {
+const getTimeString = (): string => {
 	const date = new Date();
 	// .toLocaleTimeString() doesn't seem to work in Node.js :(
 	return [date.getHours(), date.getMinutes(), date.getSeconds()]
 		.map(padTimeComponent)
 		.join(":");
 };
+
+export const log = (message: string): void =>
+	console.info(`${getTimeString()} - ${message}`);
 
 export const logEpisode = (
 	episode: number,
@@ -65,8 +68,9 @@ export const logEpisode = (
 		);
 	}
 
-	console.info(
-		`${getTimeString()} - Episode ${episode} - Rolling average return (${rollingAveragePeriod} episodes):`,
-		rollingAverageReturns.slice(-1)[0],
+	log(
+		`Episode ${episode} - Rolling average return (${rollingAveragePeriod} episodes): ${
+			rollingAverageReturns.slice(-1)[0]
+		}`,
 	);
 };

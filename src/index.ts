@@ -1,7 +1,7 @@
 import { Agent, DQN, Random, Reinforce } from "./agents";
 import { Blackjack, CartPole, Environment } from "./environments";
 import * as options from "./options";
-import { getTimeString, logEpisode, mean } from "./util";
+import { log, logEpisode, mean } from "./util";
 
 const train = (
 	environment: Environment,
@@ -69,6 +69,7 @@ const verifyOptions = (
 			`Options not specified for ${agentName} in ${environmentName}`,
 		);
 	}
+	log(`Using agent options: ${JSON.stringify(agentOptions, undefined, "\t")}`);
 };
 
 const createAgentAndGetOptions = (
@@ -121,15 +122,18 @@ const main = (): void => {
 		environment,
 	);
 
-	console.info(
-		`${getTimeString()} - Score to beat: ${
-			environment.winningScore ?? "[not set]"
-		}`,
+	log(
+		`Using training options: ${JSON.stringify(
+			trainingOptions,
+			undefined,
+			"\t",
+		)}`,
 	);
+	log(`Score to beat: ${environment.winningScore ?? "[not set]"}`);
 
 	const didWin = train(environment, agent, trainingOptions);
 
-	console.info(didWin ? "You won!" : "You lost.");
+	log(didWin ? "You won!" : "You lost.");
 };
 
 main();
