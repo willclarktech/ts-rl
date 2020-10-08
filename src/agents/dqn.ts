@@ -2,7 +2,7 @@ import * as tf from "@tensorflow/tfjs-node";
 
 import { Environment, Observation } from "../environments";
 import { gatherND } from "../operations";
-import { ReplayMemory, Transition } from "../replay-memory";
+import { BasicReplayMemory, ReplayMemory, Transition } from "../replay-memory";
 import { createNetwork, sampleUniform, sum } from "../util";
 import { Agent } from "./core";
 
@@ -58,7 +58,7 @@ export class DQN implements Agent {
 		this.epsilonMinimum = epsilonMinimum;
 		this.epsilonReduction = epsilonReduction;
 		this.numActions = numActions;
-		this.replayMemory = new ReplayMemory(replayMemoryCapacity);
+		this.replayMemory = new BasicReplayMemory(replayMemoryCapacity);
 		this.minibatchSize = minibatchSize;
 		this.optimizer = tf.train.sgd(alpha);
 		this.shouldClipLoss = shouldClipLoss;
@@ -93,11 +93,9 @@ export class DQN implements Agent {
 		return output.argMax(-1).dataSync()[0];
 	}
 
-	private getTargetsFromMinibatch(
-		minibatch: readonly Transition[],
-	): tf.Tensor1D {
+	private getTargetsFromSamples(samples: readonly Transition[]): tf.Tensor1D {
 		return tf.tensor1d(
-			minibatch.map((transition) => {
+			samples.map((transition) => {
 				if (transition.done) {
 					return transition.reward;
 				}
@@ -107,8 +105,10 @@ export class DQN implements Agent {
 						[1, transition.nextObservation.length],
 					),
 				) as tf.Tensor2D;
+
 				return output
 					.squeeze()
+					.gather([transition.action])
 					.mul(this.gamma)
 					.add(transition.reward)
 					.dataSync()[0];
@@ -117,11 +117,11 @@ export class DQN implements Agent {
 	}
 
 	private getLoss(
-		minibatch: readonly Transition[],
+		samples: readonly Transition[],
 		targets: tf.Tensor1D,
 	): tf.Scalar {
-		const observations = minibatch.map((transition) => transition.observation);
-		const actions = minibatch.map((transition) => transition.action);
+		const observations = samples.map((transition) => transition.observation);
+		const actions = samples.map((transition) => transition.action);
 		const output = this.qNetwork.predict(
 			tf.tensor(observations),
 		) as tf.Tensor2D;
@@ -129,7 +129,7 @@ export class DQN implements Agent {
 			output,
 			tf.tensor2d(
 				actions.map((a, i) => [i, a]),
-				[minibatch.length, 2],
+				[samples.length, 2],
 				"int32",
 			),
 		).squeeze();
@@ -139,10 +139,10 @@ export class DQN implements Agent {
 	}
 
 	private learn(): void {
-		const minibatch = this.replayMemory.sample(this.minibatchSize);
-		const targets = this.getTargetsFromMinibatch(minibatch);
+		const samples = this.replayMemory.sample(this.minibatchSize);
+		const targets = this.getTargetsFromSamples(samples);
 
-		this.optimizer.minimize(() => this.getLoss(minibatch, targets));
+		this.optimizer.minimize(() => this.getLoss(samples, targets));
 
 		if ((this.steps + 1) % this.targetNetworkUpdatePeriod === 0) {
 			this.synchroniseTargetNetwork();
