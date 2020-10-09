@@ -42,7 +42,7 @@ export class DQN implements Agent {
 	private steps: number;
 
 	public constructor(
-		{ numObservationDimensions, numActions }: Environment,
+		{ numObservationDimensionsProcessed, numActions }: Environment,
 		{
 			hiddenWidths,
 			alpha,
@@ -71,7 +71,11 @@ export class DQN implements Agent {
 		this.shouldClipLoss = shouldClipLoss;
 		this.tau = tau;
 		this.targetNetworkUpdatePeriod = targetNetworkUpdatePeriod;
-		const widths = [numObservationDimensions, ...hiddenWidths, numActions];
+		const widths = [
+			numObservationDimensionsProcessed,
+			...hiddenWidths,
+			numActions,
+		];
 		this.qNetwork = createNetwork(widths, "relu");
 		this.targetNetwork = createNetwork(widths, "relu");
 		this.synchroniseTargetNetwork();
@@ -169,19 +173,22 @@ export class DQN implements Agent {
 	}
 
 	public runEpisode(env: Environment): number {
-		let observation = env.reset();
+		let observation = env.resetProcessed();
 		let done = false;
+		let baseRewards: readonly number[] = [];
 		let rewards: readonly number[] = [];
 
 		tf.tidy(() => {
 			while (!done) {
 				this.steps += 1;
 				const action = this.act(observation);
+				const sample = env.step(action);
+				const processedSample = env.processSample(sample, this.steps);
 				const {
 					observation: nextObservation,
 					reward,
 					done: nextDone,
-				} = env.step(action);
+				} = processedSample;
 
 				this.replayMemory.store({
 					observation,
@@ -198,12 +205,13 @@ export class DQN implements Agent {
 					this.learn();
 				}
 
+				baseRewards = [...baseRewards, sample.reward];
 				rewards = [...rewards, reward];
 				done = nextDone;
 				observation = nextObservation;
 			}
 		});
 
-		return sum(rewards);
+		return sum(baseRewards);
 	}
 }

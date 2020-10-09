@@ -50,6 +50,7 @@ export class Blackjack implements Environment {
 	public readonly name: string;
 	public readonly winningScore: number;
 	public readonly numObservationDimensions: number;
+	public readonly numObservationDimensionsProcessed: number;
 	public readonly numActions: number;
 	public readonly natural: boolean;
 
@@ -62,6 +63,7 @@ export class Blackjack implements Environment {
 		this.name = "Blackjack";
 		this.winningScore = 0;
 		this.numObservationDimensions = 3;
+		this.numObservationDimensionsProcessed = 3;
 		this.numActions = 2;
 		this.natural = natural;
 
@@ -96,12 +98,20 @@ export class Blackjack implements Environment {
 		return reward === 1 && this.natural && isNatural(hand) ? 1.5 : reward;
 	}
 
+	public processSample(sample: Sample): Sample {
+		return sample;
+	}
+
 	public reset(): Observation {
 		this.deck = shuffleDeck();
 		this.player = this.drawHand();
 		this.dealer = this.drawHand();
 		this.done = false;
 		return this.state;
+	}
+
+	public resetProcessed(): Observation {
+		return this.reset();
 	}
 
 	public step(action: number): Sample {

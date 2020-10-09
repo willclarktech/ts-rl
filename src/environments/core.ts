@@ -10,7 +10,10 @@ export interface Environment {
 	name: string;
 	winningScore?: number;
 	numObservationDimensions: number;
+	numObservationDimensionsProcessed: number;
 	numActions: number;
 	reset(): Observation;
+	resetProcessed(): Observation;
 	step(action: number): Sample;
+	processSample(sample: Sample, steps: number): Sample;
 }
