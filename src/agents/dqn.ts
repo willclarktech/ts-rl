@@ -113,7 +113,9 @@ export class DQN implements Agent {
 		return output.argMax(-1).dataSync()[0];
 	}
 
-	private getTargetsFromSamples(samples: readonly Transition[]): tf.Tensor1D {
+	private getTargetsFromTransitions(
+		samples: readonly Transition[],
+	): tf.Tensor1D {
 		return tf.tensor1d(
 			samples.map((transition) => {
 				if (transition.done) {
@@ -137,11 +139,13 @@ export class DQN implements Agent {
 	}
 
 	private getLoss(
-		samples: readonly Transition[],
+		transitions: readonly Transition[],
 		targets: tf.Tensor1D,
 	): tf.Scalar {
-		const observations = samples.map((transition) => transition.observation);
-		const actions = samples.map((transition) => transition.action);
+		const observations = transitions.map(
+			(transition) => transition.observation,
+		);
+		const actions = transitions.map((transition) => transition.action);
 		const output = this.qNetwork.predict(
 			tf.tensor(observations),
 		) as tf.Tensor2D;
@@ -149,7 +153,7 @@ export class DQN implements Agent {
 			output,
 			tf.tensor2d(
 				actions.map((a, i) => [i, a]),
-				[samples.length, 2],
+				[transitions.length, 2],
 				"int32",
 			),
 		).squeeze();
@@ -159,10 +163,10 @@ export class DQN implements Agent {
 	}
 
 	private learn(): void {
-		const samples = this.replayMemory.sample(this.minibatchSize);
-		const targets = this.getTargetsFromSamples(samples);
+		const transitions = this.replayMemory.sample(this.minibatchSize);
+		const targets = this.getTargetsFromTransitions(transitions);
 
-		this.optimizer.minimize(() => this.getLoss(samples, targets));
+		this.optimizer.minimize(() => this.getLoss(transitions, targets));
 
 		if (
 			this.steps >= this.warmup &&
