@@ -15,9 +15,9 @@ interface AgentOptions<T = unknown> {
 const logDirectory = "./results/data";
 
 const defaultBlackjackTrainingOptions: TrainingOptions = {
-	maxEpisodes: 10_000,
-	rollingAveragePeriod: 1000,
-	logPeriod: 1000,
+	maxEpisodes: 1000,
+	rollingAveragePeriod: 100,
+	logPeriod: 100,
 	logDirectory,
 };
 
@@ -35,25 +35,32 @@ export const DQN: AgentOptions<DQNOptions> = {
 		gamma: 0.99,
 		epsilonInitial: 1,
 		epsilonMinimum: 0.01,
-		epsilonReduction: 0.001,
+		epsilonDecay: 0.99,
+		tau: 0.5,
+		targetNetworkUpdatePeriod: 1,
 		shouldClipLoss: true,
+		warmup: 10,
 		replayMemoryCapacity: 512,
 		minibatchSize: 32,
-		targetNetworkUpdatePeriod: 1,
 		trainingOptions: defaultBlackjackTrainingOptions,
 	},
 	CartPole: {
-		hiddenWidths: [2],
-		alpha: 0.0003,
-		gamma: 0.99,
+		hiddenWidths: [16],
+		alpha: 0.00003,
+		gamma: 0.9,
 		epsilonInitial: 1,
 		epsilonMinimum: 0.01,
-		epsilonReduction: 0.001,
-		shouldClipLoss: true,
-		replayMemoryCapacity: 512,
+		epsilonDecay: 0.999,
+		tau: 0.9,
+		targetNetworkUpdatePeriod: 1,
+		shouldClipLoss: false,
+		warmup: 1024,
+		replayMemoryCapacity: 4096,
 		minibatchSize: 32,
-		targetNetworkUpdatePeriod: 2,
-		trainingOptions: defaultCartPoleTrainingOptions,
+		trainingOptions: {
+			...defaultCartPoleTrainingOptions,
+			maxEpisodes: 10_000,
+		},
 	},
 };
 
