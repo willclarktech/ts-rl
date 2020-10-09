@@ -12,11 +12,13 @@ export interface DQNOptions {
 	readonly gamma: number; // discount rate
 	readonly epsilonInitial: number; // initial exploration rate, set to 0 to use greedy action policy
 	readonly epsilonMinimum: number; // minimum exploration rate
-	readonly epsilonReduction: number; // exploration rate reduction per action, set to 0 to use epsilon-greedy not epsilon-decreasing
+	readonly epsilonDecay: number; // exploration rate decay per action, set to 0 to use epsilon-greedy not epsilon-decreasing
+	readonly tau: number; // smooth target network weight update rate
+	readonly targetNetworkUpdatePeriod: number; // set to 1 to use same parameters between q and target networks at all times
 	readonly shouldClipLoss: boolean;
+	readonly warmup: number;
 	readonly replayMemoryCapacity: number;
 	readonly minibatchSize: number;
-	readonly targetNetworkUpdatePeriod: number; // set to 1 to use same parameters between q and target networks at all times
 }
 
 export class DQN implements Agent {
@@ -24,14 +26,16 @@ export class DQN implements Agent {
 
 	private readonly gamma: number;
 	private readonly epsilonMinimum: number;
-	private readonly epsilonReduction: number;
+	private readonly epsilonDecay: number;
+	private readonly tau: number;
+	private readonly targetNetworkUpdatePeriod: number;
 	private readonly numActions: number;
+	private readonly warmup: number;
 	private readonly replayMemory: ReplayMemory;
 	private readonly minibatchSize: number;
 	private readonly shouldClipLoss: boolean;
 	private readonly qNetwork: tf.Sequential;
 	private readonly optimizer: tf.Optimizer;
-	private readonly targetNetworkUpdatePeriod: number;
 
 	private epsilon: number;
 	private targetNetwork: tf.Sequential;
@@ -45,23 +49,27 @@ export class DQN implements Agent {
 			gamma,
 			epsilonInitial,
 			epsilonMinimum,
-			epsilonReduction,
+			epsilonDecay,
+			tau,
+			targetNetworkUpdatePeriod,
 			shouldClipLoss,
+			warmup,
 			replayMemoryCapacity,
 			minibatchSize,
-			targetNetworkUpdatePeriod,
 		}: DQNOptions,
 	) {
 		this.name = "DQN";
 		this.gamma = gamma;
 		this.epsilon = epsilonInitial;
 		this.epsilonMinimum = epsilonMinimum;
-		this.epsilonReduction = epsilonReduction;
+		this.epsilonDecay = epsilonDecay;
 		this.numActions = numActions;
+		this.warmup = warmup;
 		this.replayMemory = new BasicReplayMemory(replayMemoryCapacity);
 		this.minibatchSize = minibatchSize;
 		this.optimizer = tf.train.sgd(alpha);
 		this.shouldClipLoss = shouldClipLoss;
+		this.tau = tau;
 		this.targetNetworkUpdatePeriod = targetNetworkUpdatePeriod;
 		const widths = [numObservationDimensions, ...hiddenWidths, numActions];
 		this.qNetwork = createNetwork(widths, "relu");
@@ -71,17 +79,25 @@ export class DQN implements Agent {
 	}
 
 	private synchroniseTargetNetwork(): void {
-		this.targetNetwork.setWeights(
-			this.qNetwork.weights.map((weight) => weight.read()),
+		const newTargetWeights = this.qNetwork.weights.map((weight, i) =>
+			weight
+				.read()
+				.mul(this.tau)
+				.add(this.targetNetwork.weights[i].read().mul(1 - this.tau)),
 		);
+		this.targetNetwork.setWeights(newTargetWeights);
 	}
 
 	private act(observation: Observation): number {
-		const shouldActRandom = Math.random() < this.epsilon;
-		this.epsilon = Math.max(
-			this.epsilonMinimum,
-			this.epsilon - this.epsilonReduction,
-		);
+		const isWarmup = this.steps < this.warmup;
+		const shouldActRandom = isWarmup || Math.random() < this.epsilon;
+
+		if (!isWarmup) {
+			this.epsilon = Math.max(
+				this.epsilonMinimum,
+				this.epsilon * this.epsilonDecay,
+			);
+		}
 
 		if (shouldActRandom) {
 			return sampleUniform(this.numActions);
@@ -144,7 +160,10 @@ export class DQN implements Agent {
 
 		this.optimizer.minimize(() => this.getLoss(samples, targets));
 
-		if ((this.steps + 1) % this.targetNetworkUpdatePeriod === 0) {
+		if (
+			this.steps >= this.warmup &&
+			(this.steps + 1) % this.targetNetworkUpdatePeriod === 0
+		) {
 			this.synchroniseTargetNetwork();
 		}
 	}
@@ -172,7 +191,10 @@ export class DQN implements Agent {
 					nextObservation,
 				});
 
-				if (this.replayMemory.size >= this.minibatchSize) {
+				if (
+					this.steps >= this.warmup &&
+					this.replayMemory.size >= this.minibatchSize
+				) {
 					this.learn();
 				}
 
