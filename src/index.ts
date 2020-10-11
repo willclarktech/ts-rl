@@ -69,7 +69,13 @@ const verifyOptions = (
 			`Options not specified for ${agentName} in ${environmentName}`,
 		);
 	}
-	log(`Using agent options: ${JSON.stringify(agentOptions, undefined, "\t")}`);
+	log(
+		`Using agent ${agentName} with options: ${JSON.stringify(
+			agentOptions,
+			undefined,
+			"\t",
+		)}`,
+	);
 };
 
 const createAgentAndGetOptions = (
@@ -129,6 +135,7 @@ const main = (): void => {
 			"\t",
 		)}`,
 	);
+	log(`Using environment ${environment.name}`);
 	log(`Score to beat: ${environment.winningScore ?? "[not set]"}`);
 
 	const didWin = train(environment, agent, trainingOptions);
