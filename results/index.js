@@ -60,6 +60,9 @@ async function run() {
 			},
 		);
 
+		if (state.timeout) {
+			clearTimeout(state.timeout);
+		}
 		state = {
 			...state,
 			timeout: setTimeout(run, 5000),
