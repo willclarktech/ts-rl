@@ -1,3 +1,5 @@
+import "./random";
+
 import { Agent, DQN, Random, Reinforce } from "./agents";
 import { Blackjack, CartPole, Environment } from "./environments";
 import * as options from "./options";
