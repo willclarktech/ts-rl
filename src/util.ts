@@ -11,6 +11,9 @@ export const mean = (arr: readonly number[]): number => sum(arr) / arr.length;
 export const sampleUniform = (max: number, min = 0): number =>
 	Math.floor(Math.random() * (max - min)) + min;
 
+export const clip = (n: number, min: number, max: number): number =>
+	Math.min(max, Math.max(min, n));
+
 export const createNetwork = (
 	widths: readonly number[],
 	activation: ActivationFunction,
