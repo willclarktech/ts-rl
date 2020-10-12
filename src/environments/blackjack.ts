@@ -115,7 +115,7 @@ export class Blackjack implements Environment {
 	}
 
 	public step(action: number): Sample {
-		if (action >= this.numActions) {
+		if (action >= this.numActions || action < 0) {
 			throw new Error("Action is not in range");
 		}
 		if (this.done) {
