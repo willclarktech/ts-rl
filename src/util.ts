@@ -8,8 +8,8 @@ export const sum = (arr: readonly number[]): number =>
 
 export const mean = (arr: readonly number[]): number => sum(arr) / arr.length;
 
-export const sampleUniform = (n: number): number =>
-	Math.floor(Math.random() * n);
+export const sampleUniform = (max: number, min = 0): number =>
+	Math.floor(Math.random() * (max - min)) + min;
 
 export const createNetwork = (
 	widths: readonly number[],
