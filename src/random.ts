@@ -1,7 +1,7 @@
 import "@tensorflow/tfjs-node";
 
-type RandomMath = Math & { readonly seedrandom: (seed: number) => string };
+import { seed } from "./options";
 
-export const seed = 1234567890;
+type RandomMath = Math & { readonly seedrandom: (seed: number) => string };
 
 (Math as RandomMath).seedrandom(seed);

@@ -1,6 +1,8 @@
 import { DQNOptions } from "./agents/dqn";
 import { ReinforceOptions } from "./agents/reinforce";
 
+export const seed = 1234567890;
+
 export interface TrainingOptions {
 	readonly maxEpisodes: number;
 	readonly rollingAveragePeriod: number;
