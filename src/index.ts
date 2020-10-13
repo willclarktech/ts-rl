@@ -1,7 +1,7 @@
 import "./random";
 
 import { Agent, DQN, Random, Reinforce } from "./agents";
-import { Blackjack, CartPole, Environment } from "./environments";
+import { Blackjack, CartPole, Environment, MountainCar } from "./environments";
 import * as options from "./options";
 import { log, logEpisode, mean } from "./util";
 
@@ -56,6 +56,8 @@ const createEnvironment = (environmentName: string): Environment => {
 			return new Blackjack();
 		case "cartpole":
 			return new CartPole();
+		case "mountaincar":
+			return new MountainCar();
 		default:
 			throw new Error("Environment name not recognised");
 	}
