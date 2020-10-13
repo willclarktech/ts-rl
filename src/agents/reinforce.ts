@@ -1,6 +1,6 @@
 import * as tf from "@tensorflow/tfjs-node";
 
-import { Environment, Observation } from "../environments";
+import { Environment, Observation, Sample } from "../environments";
 import { createNetwork, mean, sum } from "../util";
 import { Agent } from "./core";
 
@@ -32,88 +32,113 @@ const discountAndNormalizeRewards = (
 	return normalizeRewards(discountedRewards);
 };
 
-type Sample = {
-	readonly observation: Observation;
-	readonly reward: number;
-	readonly done: boolean;
+type LogProbabilitySample = Sample & {
 	readonly logProbability: tf.Tensor1D;
+	readonly baseReward: number;
 };
 
 export interface ReinforceOptions {
 	readonly hiddenWidths: readonly number[];
 	readonly alpha: number; // learning rate
 	readonly gamma: number; // discount rate
+	readonly seed?: number;
 }
 
 export class Reinforce implements Agent {
 	public readonly name: string;
 
+	private readonly seed?: number;
 	private readonly gamma: number;
 	private readonly network: tf.Sequential;
 	private readonly optimizer: tf.Optimizer;
 
+	private steps: number;
+
 	public constructor(
-		{ numObservationDimensions, numActions }: Environment,
-		{ hiddenWidths, alpha, gamma }: ReinforceOptions,
+		{ numObservationDimensionsProcessed, numActions }: Environment,
+		{ hiddenWidths, alpha, gamma, seed }: ReinforceOptions,
 	) {
 		this.name = "Reinforce";
+		this.seed = seed;
 		this.gamma = gamma;
 		this.optimizer = tf.train.adam(alpha);
-		const widths = [numObservationDimensions, ...hiddenWidths, numActions];
+		const widths = [
+			numObservationDimensionsProcessed,
+			...hiddenWidths,
+			numActions,
+		];
 		this.network = createNetwork(widths, "relu", "softmax");
+		this.steps = 0;
 	}
 
-	private getSample(env: Environment, observation: Observation): Sample {
+	private getSample(
+		env: Environment,
+		observation: Observation,
+		steps: number,
+	): LogProbabilitySample {
 		const processedObservation = tf.tensor2d(
 			[...observation],
 			[1, observation.length],
 		);
 		const output = this.network.predict(processedObservation) as tf.Tensor2D;
 		const squeezedOutput = output.squeeze<tf.Tensor1D>();
-		const action = tf.multinomial(squeezedOutput, 1).dataSync()[0];
-		const logProbability = tf.log(squeezedOutput.gather([action]));
-		const { observation: nextObservation, reward, done } = env.step(action);
+		const logProbabilities = squeezedOutput.log();
+		const action = tf.multinomial(logProbabilities, 1, this.seed).dataSync()[0];
+		const logProbability = logProbabilities.gather([action]);
+		const sample = env.step(action);
+		const { observation: nextObservation, reward, done } = env.processSample(
+			sample,
+			steps,
+		);
 
 		return {
 			observation: nextObservation,
 			reward,
 			done,
 			logProbability: logProbability,
+			baseReward: sample.reward,
 		};
 	}
 
 	private calculateLoss(
-		rewards: readonly number[],
 		logProbabilities: tf.Tensor1D,
+		rewards: readonly number[],
 	): tf.Scalar {
-		const normalizedDiscountedRewards = discountAndNormalizeRewards(
-			rewards,
-			this.gamma,
-		);
-		return tf.sum(logProbabilities.mul(normalizedDiscountedRewards)).mul(-1);
+		const discountedReturns = discountAndNormalizeRewards(rewards, this.gamma);
+		return logProbabilities.mul(discountedReturns).sum().mul(-1).asScalar();
 	}
 
 	public runEpisode(env: Environment): number {
-		let observation = env.reset();
+		let observation = env.resetProcessed();
 		let done = false;
+		let baseRewards: readonly number[] = [];
 		let rewards: readonly number[] = [];
 		let logProbabilities = tf.tensor1d([]);
 
 		tf.tidy(() => {
 			this.optimizer.minimize(() => {
 				while (!done) {
-					const sample = this.getSample(env, observation);
-					({ observation, done } = sample);
-					const { reward, logProbability } = sample;
+					this.steps += 1;
 
+					const {
+						observation: nextObservation,
+						reward,
+						done: nextDone,
+						logProbability,
+						baseReward,
+					} = this.getSample(env, observation, this.steps);
+
+					baseRewards = [...baseRewards, baseReward];
 					rewards = [...rewards, reward];
+					done = nextDone;
+					observation = nextObservation;
 					logProbabilities = logProbabilities.concat(logProbability);
 				}
 
-				return this.calculateLoss(rewards, logProbabilities);
+				return this.calculateLoss(logProbabilities, rewards);
 			});
 		});
 
-		return sum(rewards);
+		return sum(baseRewards);
 	}
 }
