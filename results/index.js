@@ -63,9 +63,10 @@ async function run() {
 		if (state.timeout) {
 			clearTimeout(state.timeout);
 		}
+		const timeoutLength = Math.max(returns.length * 2, 1);
 		state = {
 			...state,
-			timeout: setTimeout(run, 5000),
+			timeout: setTimeout(run, timeoutLength),
 		};
 	} catch (error) {
 		setError(error);
