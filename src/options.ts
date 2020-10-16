@@ -14,6 +14,7 @@ interface AgentOptions<T = unknown> {
 	readonly [key: string]: T & { readonly trainingOptions: TrainingOptions };
 }
 
+export const saveDirectory = "./models";
 const logDirectory = "./results/data";
 
 const defaultBlackjackTrainingOptions: TrainingOptions = {

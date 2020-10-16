@@ -122,7 +122,7 @@ const createAgentAndGetOptions = (
 	}
 };
 
-const main = (): void => {
+const main = async (): Promise<void> => {
 	const agentName = process.argv[2] ?? "reinforce";
 	const environmentName = process.argv[3] ?? "cartpole";
 
@@ -143,8 +143,9 @@ const main = (): void => {
 	log(`Score to beat: ${environment.winningScore ?? "[not set]"}`);
 
 	const didWin = train(environment, agent, trainingOptions);
-
 	log(didWin ? "You won!" : "You lost.");
+
+	await agent.save(options.saveDirectory);
 };
 
 main();
