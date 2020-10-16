@@ -47,25 +47,21 @@ export interface ReinforceOptions {
 export class Reinforce implements Agent {
 	public readonly name: string;
 
-	private readonly seed?: number;
-	private readonly gamma: number;
+	private readonly options: ReinforceOptions;
 	private readonly network: tf.Sequential;
 	private readonly optimizer: tf.Optimizer;
 
 	private steps: number;
 
-	public constructor(
-		{ numObservationDimensionsProcessed, numActions }: Environment,
-		{ hiddenWidths, alpha, gamma, seed }: ReinforceOptions,
-	) {
+	public constructor(environment: Environment, options: ReinforceOptions) {
 		this.name = "Reinforce";
-		this.seed = seed;
-		this.gamma = gamma;
-		this.optimizer = tf.train.adam(alpha);
+		this.options = options;
+
+		this.optimizer = tf.train.adam(options.alpha);
 		const widths = [
-			numObservationDimensionsProcessed,
-			...hiddenWidths,
-			numActions,
+			environment.numObservationDimensionsProcessed,
+			...options.hiddenWidths,
+			environment.numActions,
 		];
 		this.network = createNetwork(widths, "relu", "softmax");
 		this.steps = 0;
@@ -76,6 +72,7 @@ export class Reinforce implements Agent {
 		observation: Observation,
 		steps: number,
 	): LogProbabilitySample {
+		const { seed } = this.options;
 		const processedObservation = tf.tensor2d(
 			[...observation],
 			[1, observation.length],
@@ -83,7 +80,7 @@ export class Reinforce implements Agent {
 		const output = this.network.predict(processedObservation) as tf.Tensor2D;
 		const squeezedOutput = output.squeeze<tf.Tensor1D>();
 		const logProbabilities = squeezedOutput.log();
-		const action = tf.multinomial(logProbabilities, 1, this.seed).dataSync()[0];
+		const action = tf.multinomial(logProbabilities, 1, seed).dataSync()[0];
 		const logProbability = logProbabilities.gather([action]);
 		const sample = env.step(action);
 		const { observation: nextObservation, reward, done } = env.processSample(
@@ -104,7 +101,8 @@ export class Reinforce implements Agent {
 		logProbabilities: tf.Tensor1D,
 		rewards: readonly number[],
 	): tf.Scalar {
-		const discountedReturns = discountAndNormalizeRewards(rewards, this.gamma);
+		const { gamma } = this.options;
+		const discountedReturns = discountAndNormalizeRewards(rewards, gamma);
 		return logProbabilities.mul(discountedReturns).sum().mul(-1).asScalar();
 	}
 
