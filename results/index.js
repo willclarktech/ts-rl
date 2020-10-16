@@ -1,6 +1,6 @@
 /* globals document, XMLHttpRequest, tfvis */
 
-const algorithms = ["DQN", "Random", "Reinforce"];
+const algorithms = ["ActorCritic", "DQN", "Random", "Reinforce"];
 const environments = ["Blackjack", "CartPole", "MountainCar"];
 
 let state = {
