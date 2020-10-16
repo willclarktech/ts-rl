@@ -1,6 +1,6 @@
 import "./random";
 
-import { Agent, DQN, Random, Reinforce } from "./agents";
+import { ActorCritic, Agent, DQN, Random, Reinforce } from "./agents";
 import { Blackjack, CartPole, Environment, MountainCar } from "./environments";
 import * as options from "./options";
 import { log, logEpisode, mean } from "./util";
@@ -90,6 +90,15 @@ const createAgentAndGetOptions = (
 	readonly trainingOptions: options.TrainingOptions;
 } => {
 	switch (agentName) {
+		case "actorcritic": {
+			const actorCriticOptions = options.ActorCritic[environment.name];
+			verifyOptions(actorCriticOptions, agentName, environment.name);
+			const { trainingOptions, ...agentOptions } = actorCriticOptions;
+			return {
+				agent: new ActorCritic(environment, agentOptions),
+				trainingOptions,
+			};
+		}
 		case "dqn": {
 			const dqnOptions = options.DQN[environment.name];
 			verifyOptions(dqnOptions, agentName, environment.name);

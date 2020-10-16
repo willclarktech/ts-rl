@@ -1,3 +1,4 @@
+import { ActorCriticOptions } from "./agents/actor-critic";
 import { DQNOptions } from "./agents/dqn";
 import { ReinforceOptions } from "./agents/reinforce";
 
@@ -36,6 +37,25 @@ const defaultMountainCarTrainingOptions: TrainingOptions = {
 	rollingAveragePeriod: 100,
 	logPeriod: 10,
 	logDirectory,
+};
+
+export const ActorCritic: AgentOptions<ActorCriticOptions> = {
+	Blackjack: {
+		seed,
+		alphaActor: 0.01,
+		alphaCritic: 0.001,
+		gamma: 0.99,
+		hiddenWidths: [8],
+		trainingOptions: defaultBlackjackTrainingOptions,
+	},
+	CartPole: {
+		seed,
+		alphaActor: 0.0003,
+		alphaCritic: 0.0003,
+		gamma: 0.9,
+		hiddenWidths: [32, 16],
+		trainingOptions: { ...defaultCartPoleTrainingOptions, maxEpisodes: 10_000 },
+	},
 };
 
 export const DQN: AgentOptions<DQNOptions> = {
