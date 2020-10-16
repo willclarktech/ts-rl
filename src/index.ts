@@ -150,4 +150,4 @@ const main = async (): Promise<void> => {
 	}
 };
 
-main();
+main().catch(console.error);
