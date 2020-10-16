@@ -18,6 +18,7 @@
 		"lint": "eslint './src/**/*.{js,json,ts}'",
 		"build": "tsc",
 		"test": "NODE_ENV=TEST jest",
+		"convert": "tensorflowjs_converter --input_format tfjs_layers_model --output_format keras",
 		"start": "npm run build && node ./build/index.js",
 		"serve": "./scripts/serve_results.sh"
 	},
