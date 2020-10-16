@@ -25,8 +25,4 @@ export class Random implements Agent {
 
 		return sum(rewards);
 	}
-
-	public async save(): Promise<void> {
-		// not necessary
-	}
 }

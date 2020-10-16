@@ -145,7 +145,9 @@ const main = async (): Promise<void> => {
 	const didWin = train(environment, agent, trainingOptions);
 	log(didWin ? "You won!" : "You lost.");
 
-	await agent.save(options.saveDirectory);
+	if (agent.save) {
+		await agent.save(options.saveDirectory);
+	}
 };
 
 main();
