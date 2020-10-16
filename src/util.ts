@@ -14,6 +14,34 @@ export const sampleUniform = (max: number, min = 0): number =>
 export const clip = (n: number, min: number, max: number): number =>
 	Math.min(max, Math.max(min, n));
 
+const calculateDiscountedReward = (
+	rewards: readonly number[],
+	gamma: number,
+): number => sum(rewards.map((reward, i) => reward * gamma ** i));
+
+export const calculateDiscountedRewards = (
+	rewards: readonly number[],
+	gamma: number,
+): readonly number[] =>
+	rewards.map((_, i) => calculateDiscountedReward(rewards.slice(i), gamma));
+
+const normalizeRewards = (
+	rewards: readonly number[],
+	epsilon = 1e-9,
+): readonly number[] => {
+	const mn = mean(rewards);
+	const std = tf.moments(rewards).variance.sqrt().dataSync()[0];
+	return rewards.map((reward) => reward - mn / (std + epsilon));
+};
+
+export const calculateDiscountedNormalizedRewards = (
+	rewards: readonly number[],
+	gamma: number,
+): readonly number[] => {
+	const discountedRewards = calculateDiscountedRewards(rewards, gamma);
+	return normalizeRewards(discountedRewards);
+};
+
 export const createNetwork = (
 	widths: readonly number[],
 	activation: ActivationFunction,

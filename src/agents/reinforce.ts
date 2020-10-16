@@ -1,36 +1,12 @@
 import * as tf from "@tensorflow/tfjs-node";
 
 import { Environment, Observation, Sample } from "../environments";
-import { createNetwork, mean, sum } from "../util";
+import {
+	calculateDiscountedNormalizedRewards,
+	createNetwork,
+	sum,
+} from "../util";
 import { Agent } from "./core";
-
-const calculateDiscountedReward = (
-	rewards: readonly number[],
-	gamma: number,
-): number => sum(rewards.map((reward, i) => reward * gamma ** i));
-
-const calculateDiscountedRewards = (
-	rewards: readonly number[],
-	gamma: number,
-): readonly number[] =>
-	rewards.map((_, i) => calculateDiscountedReward(rewards.slice(i), gamma));
-
-const normalizeRewards = (
-	rewards: readonly number[],
-	epsilon = 1e-9,
-): readonly number[] => {
-	const mn = mean(rewards);
-	const std = tf.moments(rewards).variance.sqrt().dataSync()[0];
-	return rewards.map((reward) => reward - mn / (std + epsilon));
-};
-
-const discountAndNormalizeRewards = (
-	rewards: readonly number[],
-	gamma: number,
-): readonly number[] => {
-	const discountedRewards = calculateDiscountedRewards(rewards, gamma);
-	return normalizeRewards(discountedRewards);
-};
 
 type LogProbabilitySample = Sample & {
 	readonly logProbability: tf.Tensor1D;
@@ -77,7 +53,9 @@ export class Reinforce implements Agent {
 			[...observation],
 			[1, observation.length],
 		);
-		const output = this.network.predict(processedObservation) as tf.Tensor2D;
+		const output = this.network.predictOnBatch(
+			processedObservation,
+		) as tf.Tensor2D;
 		const squeezedOutput = output.squeeze<tf.Tensor1D>();
 		const logProbabilities = squeezedOutput.log();
 		const action = tf.multinomial(logProbabilities, 1, seed).dataSync()[0];
@@ -102,7 +80,10 @@ export class Reinforce implements Agent {
 		rewards: readonly number[],
 	): tf.Scalar {
 		const { gamma } = this.options;
-		const discountedReturns = discountAndNormalizeRewards(rewards, gamma);
+		const discountedReturns = calculateDiscountedNormalizedRewards(
+			rewards,
+			gamma,
+		);
 		return logProbabilities.mul(discountedReturns).sum().mul(-1).asScalar();
 	}
 
