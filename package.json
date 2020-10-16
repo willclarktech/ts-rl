@@ -20,7 +20,8 @@
 		"test": "NODE_ENV=TEST jest",
 		"convert": "tensorflowjs_converter --input_format tfjs_layers_model --output_format keras",
 		"start": "npm run build && node ./build/index.js",
-		"serve": "./scripts/serve_results.sh"
+		"serve": "./scripts/serve_results.sh",
+		"notebook": "jupyter notebook"
 	},
 	"dependencies": {
 		"@tensorflow/tfjs-node": "^2.4.0"
