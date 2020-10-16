@@ -141,4 +141,8 @@ export class Reinforce implements Agent {
 
 		return sum(baseRewards);
 	}
+
+	public async save(): Promise<void> {
+		throw new Error("not implemented");
+	}
 }
