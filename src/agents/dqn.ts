@@ -1,4 +1,5 @@
 import * as tf from "@tensorflow/tfjs-node";
+import fs from "fs";
 
 import { Environment, Observation } from "../environments";
 import { gatherND } from "../operations";
@@ -21,19 +22,25 @@ export interface DQNOptions {
 	readonly minibatchSize: number;
 }
 
+interface DQNSaveObject {
+	readonly env: Environment;
+	readonly options: DQNOptions;
+	readonly state: {
+		readonly replayMemory: ReplayMemory;
+		readonly epsilon: number;
+		readonly steps: number;
+		readonly qNetworkPath: string;
+		readonly targetNetworkPath: string;
+	};
+}
+
 export class DQN implements Agent {
 	public readonly name: string;
 
-	private readonly gamma: number;
-	private readonly epsilonMinimum: number;
-	private readonly epsilonDecay: number;
-	private readonly tau: number;
-	private readonly targetNetworkUpdatePeriod: number;
-	private readonly numActions: number;
-	private readonly warmup: number;
+	private readonly env: Environment;
+	private readonly options: DQNOptions;
+
 	private readonly replayMemory: ReplayMemory;
-	private readonly minibatchSize: number;
-	private readonly shouldClipLoss: boolean;
 	private readonly qNetwork: tf.Sequential;
 	private readonly optimizer: tf.Optimizer;
 
@@ -41,36 +48,21 @@ export class DQN implements Agent {
 	private targetNetwork: tf.Sequential;
 	private steps: number;
 
-	public constructor(
-		{ numObservationDimensionsProcessed, numActions }: Environment,
-		{
+	public constructor(env: Environment, options: DQNOptions) {
+		const { numObservationDimensionsProcessed, numActions } = env;
+		const {
 			hiddenWidths,
 			alpha,
-			gamma,
 			epsilonInitial,
-			epsilonMinimum,
-			epsilonDecay,
-			tau,
-			targetNetworkUpdatePeriod,
-			shouldClipLoss,
-			warmup,
 			replayMemoryCapacity,
-			minibatchSize,
-		}: DQNOptions,
-	) {
+		} = options;
 		this.name = "DQN";
-		this.gamma = gamma;
+		this.env = env;
+		this.options = options;
+
 		this.epsilon = epsilonInitial;
-		this.epsilonMinimum = epsilonMinimum;
-		this.epsilonDecay = epsilonDecay;
-		this.numActions = numActions;
-		this.warmup = warmup;
 		this.replayMemory = new BasicReplayMemory(replayMemoryCapacity);
-		this.minibatchSize = minibatchSize;
-		this.optimizer = tf.train.sgd(alpha);
-		this.shouldClipLoss = shouldClipLoss;
-		this.tau = tau;
-		this.targetNetworkUpdatePeriod = targetNetworkUpdatePeriod;
+		this.optimizer = tf.train.adam(alpha);
 		const widths = [
 			numObservationDimensionsProcessed,
 			...hiddenWidths,
@@ -83,28 +75,29 @@ export class DQN implements Agent {
 	}
 
 	private synchroniseTargetNetwork(): void {
+		const { tau } = this.options;
 		const newTargetWeights = this.qNetwork.weights.map((weight, i) =>
 			weight
 				.read()
-				.mul(this.tau)
-				.add(this.targetNetwork.weights[i].read().mul(1 - this.tau)),
+				.mul(tau)
+				.add(this.targetNetwork.weights[i].read().mul(1 - tau)),
 		);
 		this.targetNetwork.setWeights(newTargetWeights);
 	}
 
 	private act(observation: Observation): number {
-		const isWarmup = this.steps < this.warmup;
+		const { numActions } = this.env;
+		const { epsilonDecay, epsilonMinimum, warmup } = this.options;
+
+		const isWarmup = this.steps < warmup;
 		const shouldActRandom = isWarmup || Math.random() < this.epsilon;
 
 		if (!isWarmup) {
-			this.epsilon = Math.max(
-				this.epsilonMinimum,
-				this.epsilon * this.epsilonDecay,
-			);
+			this.epsilon = Math.max(epsilonMinimum, this.epsilon * epsilonDecay);
 		}
 
 		if (shouldActRandom) {
-			return sampleUniform(this.numActions);
+			return sampleUniform(numActions);
 		}
 
 		const output = this.qNetwork.predict(
@@ -116,6 +109,7 @@ export class DQN implements Agent {
 	private getTargetsFromTransitions(
 		samples: readonly Transition[],
 	): tf.Tensor1D {
+		const { gamma } = this.options;
 		return tf.tensor1d(
 			samples.map((transition) => {
 				if (transition.done) {
@@ -131,7 +125,7 @@ export class DQN implements Agent {
 				return output
 					.squeeze()
 					.gather([transition.action])
-					.mul(this.gamma)
+					.mul(gamma)
 					.add(transition.reward)
 					.dataSync()[0];
 			}),
@@ -142,6 +136,8 @@ export class DQN implements Agent {
 		transitions: readonly Transition[],
 		targets: tf.Tensor1D,
 	): tf.Scalar {
+		const { shouldClipLoss } = this.options;
+
 		const observations = transitions.map(
 			(transition) => transition.observation,
 		);
@@ -159,24 +155,28 @@ export class DQN implements Agent {
 		).squeeze();
 
 		const loss = tf.losses.meanSquaredError(targets, predictions) as tf.Scalar;
-		return this.shouldClipLoss ? (loss.clipByValue(-1, 1) as tf.Scalar) : loss;
+		return shouldClipLoss ? (loss.clipByValue(-1, 1) as tf.Scalar) : loss;
 	}
 
 	private learn(): void {
-		const transitions = this.replayMemory.sample(this.minibatchSize);
+		const { minibatchSize, targetNetworkUpdatePeriod, warmup } = this.options;
+
+		const transitions = this.replayMemory.sample(minibatchSize);
 		const targets = this.getTargetsFromTransitions(transitions);
 
 		this.optimizer.minimize(() => this.getLoss(transitions, targets));
 
 		if (
-			this.steps >= this.warmup &&
-			(this.steps + 1) % this.targetNetworkUpdatePeriod === 0
+			this.steps >= warmup &&
+			(this.steps + 1) % targetNetworkUpdatePeriod === 0
 		) {
 			this.synchroniseTargetNetwork();
 		}
 	}
 
 	public runEpisode(env: Environment): number {
+		const { minibatchSize, warmup } = this.options;
+
 		let observation = env.resetProcessed();
 		let done = false;
 		let baseRewards: readonly number[] = [];
@@ -202,10 +202,7 @@ export class DQN implements Agent {
 					nextObservation,
 				});
 
-				if (
-					this.steps >= this.warmup &&
-					this.replayMemory.size >= this.minibatchSize
-				) {
+				if (this.steps >= warmup && this.replayMemory.size >= minibatchSize) {
 					this.learn();
 				}
 
@@ -217,5 +214,27 @@ export class DQN implements Agent {
 		});
 
 		return sum(baseRewards);
+	}
+
+	public async save(directory: string): Promise<void> {
+		const qNetworkPath = `${directory}/${this.name}-${this.env.name}-q-network`;
+		await this.qNetwork.save(`file://${qNetworkPath}`);
+
+		const targetNetworkPath = `${directory}/${this.name}-${this.env.name}-target-network`;
+		await this.targetNetwork.save(`file://${targetNetworkPath}`);
+
+		const agentPath = `${directory}/${this.name}-${this.env.name}.json`;
+		const saveObject: DQNSaveObject = {
+			env: this.env,
+			options: this.options,
+			state: {
+				replayMemory: this.replayMemory,
+				epsilon: this.epsilon,
+				steps: this.steps,
+				qNetworkPath,
+				targetNetworkPath,
+			},
+		};
+		fs.writeFileSync(agentPath, JSON.stringify(saveObject));
 	}
 }
