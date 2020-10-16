@@ -18,7 +18,8 @@
 		"lint": "eslint './src/**/*.{js,json,ts}'",
 		"build": "tsc",
 		"test": "NODE_ENV=TEST jest",
-		"start": "npm run build && node ./build/index.js"
+		"start": "npm run build && node ./build/index.js",
+		"serve": "./scripts/serve_results.sh"
 	},
 	"dependencies": {
 		"@tensorflow/tfjs-node": "^2.4.0"
