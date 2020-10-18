@@ -35,7 +35,7 @@ export class CartPole implements Environment {
 
 		this.numObservationDimensionsProcessed = 5;
 		this.baseReward = 1;
-		this.winReward = 2;
+		this.winReward = 100;
 		this.failReward = -200;
 
 		this.gravity = 9.8;

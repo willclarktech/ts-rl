@@ -13,12 +13,19 @@ const train = (
 		rollingAveragePeriod,
 		logPeriod,
 		logDirectory,
+		warmupEpisodes,
 	}: options.TrainingOptions,
 ): boolean => {
 	const logFile = `${logDirectory}/${agent.name}-${environment.name}.json`;
 
 	const returns = [];
 	const rollingAverageReturns = [];
+
+	log(`Warming up for ${warmupEpisodes} episodes...`);
+	for (let episode = 1; episode <= warmupEpisodes; ++episode) {
+		agent.runEpisode(environment, true);
+	}
+	log("Finished warming up");
 
 	for (let episode = 1; episode <= maxEpisodes; ++episode) {
 		const ret = agent.runEpisode(environment);

@@ -28,15 +28,12 @@ export class ActorCritic implements Agent {
 	private readonly actorOptimizer: tf.Optimizer;
 	private readonly criticOptimizer: tf.Optimizer;
 
-	private steps: number;
-
 	public constructor(environment: Environment, options: ActorCriticOptions) {
 		this.name = "ActorCritic";
 		this.options = options;
-		this.steps = 0;
 
 		const widths = [
-			environment.numObservationDimensions,
+			environment.numObservationDimensionsProcessed,
 			...options.hiddenWidths,
 		];
 		this.sharedNetwork = createNetwork(widths, "relu");
@@ -68,7 +65,6 @@ export class ActorCritic implements Agent {
 	private getSample(
 		environment: Environment,
 		observation: Observation,
-		_steps: number,
 	): Sample {
 		const { seed } = this.options;
 
@@ -137,26 +133,28 @@ export class ActorCritic implements Agent {
 	}
 
 	public runEpisode(environment: Environment): number {
-		let observations: readonly Observation[] = [environment.reset()];
+		let steps = 0;
+		let observations: readonly Observation[] = [environment.resetProcessed()];
 		let done = false;
+		let baseRewards: readonly number[] = [];
 		let rewards: readonly number[] = [];
 
 		tf.tidy(() => {
 			while (!done) {
-				this.actorHead.trainable = false;
-				this.criticHead.trainable = false;
-				this.steps += 1;
+				steps += 1;
 
 				const observation = observations[observations.length - 1];
+				const sample = this.getSample(environment, observation);
 				const {
 					observation: nextObservation,
 					reward,
 					done: nextDone,
-				} = this.getSample(environment, observation, this.steps);
+				} = environment.processSample(sample, steps);
 
 				if (!nextDone) {
 					observations = [...observations, nextObservation];
 				}
+				baseRewards = [...rewards, sample.reward];
 				rewards = [...rewards, reward];
 				done = nextDone;
 			}
@@ -174,6 +172,6 @@ export class ActorCritic implements Agent {
 			});
 		});
 
-		return sum(rewards);
+		return sum(baseRewards);
 	}
 }

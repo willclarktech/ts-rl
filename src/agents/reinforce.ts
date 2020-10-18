@@ -10,7 +10,6 @@ import { Agent } from "./core";
 
 type LogProbabilitySample = Sample & {
 	readonly logProbability: tf.Tensor1D;
-	readonly baseReward: number;
 };
 
 export interface ReinforceOptions {
@@ -27,8 +26,6 @@ export class Reinforce implements Agent {
 	private readonly network: tf.Sequential;
 	private readonly optimizer: tf.Optimizer;
 
-	private steps: number;
-
 	public constructor(environment: Environment, options: ReinforceOptions) {
 		this.name = "Reinforce";
 		this.options = options;
@@ -40,13 +37,11 @@ export class Reinforce implements Agent {
 			environment.numActions,
 		];
 		this.network = createNetwork(widths, "relu", "softmax");
-		this.steps = 0;
 	}
 
 	private getSample(
 		env: Environment,
 		observation: Observation,
-		steps: number,
 	): LogProbabilitySample {
 		const { seed } = this.options;
 		const processedObservation = tf.tensor2d(
@@ -61,17 +56,10 @@ export class Reinforce implements Agent {
 		const action = tf.multinomial(logProbabilities, 1, seed).dataSync()[0];
 		const logProbability = logProbabilities.gather([action]);
 		const sample = env.step(action);
-		const { observation: nextObservation, reward, done } = env.processSample(
-			sample,
-			steps,
-		);
 
 		return {
-			observation: nextObservation,
-			reward,
-			done,
-			logProbability: logProbability,
-			baseReward: sample.reward,
+			...sample,
+			logProbability,
 		};
 	}
 
@@ -88,6 +76,7 @@ export class Reinforce implements Agent {
 	}
 
 	public runEpisode(env: Environment): number {
+		let steps = 0;
 		let observation = env.resetProcessed();
 		let done = false;
 		let baseRewards: readonly number[] = [];
@@ -97,21 +86,20 @@ export class Reinforce implements Agent {
 		tf.tidy(() => {
 			this.optimizer.minimize(() => {
 				while (!done) {
-					this.steps += 1;
+					steps += 1;
 
+					const sample = this.getSample(env, observation);
 					const {
 						observation: nextObservation,
 						reward,
 						done: nextDone,
-						logProbability,
-						baseReward,
-					} = this.getSample(env, observation, this.steps);
+					} = env.processSample(sample, steps);
 
-					baseRewards = [...baseRewards, baseReward];
+					baseRewards = [...baseRewards, sample.reward];
 					rewards = [...rewards, reward];
 					done = nextDone;
 					observation = nextObservation;
-					logProbabilities = logProbabilities.concat(logProbability);
+					logProbabilities = logProbabilities.concat(sample.logProbability);
 				}
 
 				return this.calculateLoss(logProbabilities, rewards);

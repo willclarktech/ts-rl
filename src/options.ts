@@ -9,6 +9,7 @@ export interface TrainingOptions {
 	readonly rollingAveragePeriod: number;
 	readonly logPeriod: number;
 	readonly logDirectory: string;
+	readonly warmupEpisodes: number;
 }
 
 interface AgentOptions<T = unknown> {
@@ -23,6 +24,7 @@ const defaultBlackjackTrainingOptions: TrainingOptions = {
 	rollingAveragePeriod: 100,
 	logPeriod: 100,
 	logDirectory,
+	warmupEpisodes: 0,
 };
 
 const defaultCartPoleTrainingOptions: TrainingOptions = {
@@ -30,6 +32,7 @@ const defaultCartPoleTrainingOptions: TrainingOptions = {
 	rollingAveragePeriod: 100,
 	logPeriod: 10,
 	logDirectory,
+	warmupEpisodes: 0,
 };
 
 const defaultMountainCarTrainingOptions: TrainingOptions = {
@@ -37,6 +40,7 @@ const defaultMountainCarTrainingOptions: TrainingOptions = {
 	rollingAveragePeriod: 100,
 	logPeriod: 10,
 	logDirectory,
+	warmupEpisodes: 0,
 };
 
 export const ActorCritic: AgentOptions<ActorCriticOptions> = {
@@ -50,10 +54,10 @@ export const ActorCritic: AgentOptions<ActorCriticOptions> = {
 	},
 	CartPole: {
 		seed,
-		alphaActor: 0.0003,
-		alphaCritic: 0.0003,
-		gamma: 0.9,
-		hiddenWidths: [32, 16],
+		alphaActor: 0.00001,
+		alphaCritic: 0.00003,
+		gamma: 0.99,
+		hiddenWidths: [8],
 		trainingOptions: { ...defaultCartPoleTrainingOptions, maxEpisodes: 10_000 },
 	},
 };
@@ -69,27 +73,29 @@ export const DQN: AgentOptions<DQNOptions> = {
 		tau: 0.5,
 		targetNetworkUpdatePeriod: 1,
 		shouldClipLoss: true,
-		warmup: 10,
 		replayMemoryCapacity: 512,
 		minibatchSize: 32,
-		trainingOptions: defaultBlackjackTrainingOptions,
+		trainingOptions: {
+			...defaultBlackjackTrainingOptions,
+			warmupEpisodes: 256,
+		},
 	},
 	CartPole: {
-		hiddenWidths: [16],
-		alpha: 0.00003,
+		hiddenWidths: [24],
+		alpha: 0.00001,
 		gamma: 0.9,
 		epsilonInitial: 1,
 		epsilonMinimum: 0.01,
 		epsilonDecay: 0.999,
-		tau: 0.9,
+		tau: 0.8,
 		targetNetworkUpdatePeriod: 1,
-		shouldClipLoss: false,
-		warmup: 1024,
-		replayMemoryCapacity: 4096,
+		shouldClipLoss: true,
+		replayMemoryCapacity: 32_768,
 		minibatchSize: 32,
 		trainingOptions: {
 			...defaultCartPoleTrainingOptions,
 			maxEpisodes: 10_000,
+			warmupEpisodes: 1024,
 		},
 	},
 	MountainCar: {
@@ -102,10 +108,12 @@ export const DQN: AgentOptions<DQNOptions> = {
 		tau: 0.9,
 		targetNetworkUpdatePeriod: 1,
 		shouldClipLoss: false,
-		warmup: 65536,
 		replayMemoryCapacity: 65536,
 		minibatchSize: 32,
-		trainingOptions: defaultCartPoleTrainingOptions,
+		trainingOptions: {
+			...defaultCartPoleTrainingOptions,
+			warmupEpisodes: 4096,
+		},
 	},
 };
 

@@ -17,7 +17,6 @@ export interface DQNOptions {
 	readonly tau: number; // smooth target network weight update rate
 	readonly targetNetworkUpdatePeriod: number; // set to 1 to use same parameters between q and target networks at all times
 	readonly shouldClipLoss: boolean;
-	readonly warmup: number;
 	readonly replayMemoryCapacity: number;
 	readonly minibatchSize: number;
 }
@@ -28,7 +27,6 @@ interface DQNSaveObject {
 	readonly state: {
 		readonly replayMemory: ReplayMemory;
 		readonly epsilon: number;
-		readonly steps: number;
 		readonly qNetworkPath: string;
 		readonly targetNetworkPath: string;
 	};
@@ -46,7 +44,6 @@ export class DQN implements Agent {
 
 	private epsilon: number;
 	private targetNetwork: tf.Sequential;
-	private steps: number;
 
 	public constructor(env: Environment, options: DQNOptions) {
 		const { numObservationDimensionsProcessed, numActions } = env;
@@ -71,7 +68,6 @@ export class DQN implements Agent {
 		this.qNetwork = createNetwork(widths, "relu");
 		this.targetNetwork = createNetwork(widths, "relu");
 		this.synchroniseTargetNetwork();
-		this.steps = 0;
 	}
 
 	private synchroniseTargetNetwork(): void {
@@ -87,14 +83,11 @@ export class DQN implements Agent {
 
 	private act(observation: Observation): number {
 		const { numActions } = this.env;
-		const { epsilonDecay, epsilonMinimum, warmup } = this.options;
+		const { epsilonDecay, epsilonMinimum } = this.options;
 
-		const isWarmup = this.steps < warmup;
-		const shouldActRandom = isWarmup || Math.random() < this.epsilon;
+		const shouldActRandom = Math.random() < this.epsilon;
 
-		if (!isWarmup) {
-			this.epsilon = Math.max(epsilonMinimum, this.epsilon * epsilonDecay);
-		}
+		this.epsilon = Math.max(epsilonMinimum, this.epsilon * epsilonDecay);
 
 		if (shouldActRandom) {
 			return sampleUniform(numActions);
@@ -158,25 +151,23 @@ export class DQN implements Agent {
 		return shouldClipLoss ? (loss.clipByValue(-1, 1) as tf.Scalar) : loss;
 	}
 
-	private learn(): void {
-		const { minibatchSize, targetNetworkUpdatePeriod, warmup } = this.options;
+	private learn(steps: number): void {
+		const { minibatchSize, targetNetworkUpdatePeriod } = this.options;
 
 		const transitions = this.replayMemory.sample(minibatchSize);
 		const targets = this.getTargetsFromTransitions(transitions);
 
 		this.optimizer.minimize(() => this.getLoss(transitions, targets));
 
-		if (
-			this.steps >= warmup &&
-			(this.steps + 1) % targetNetworkUpdatePeriod === 0
-		) {
+		if ((steps + 1) % targetNetworkUpdatePeriod === 0) {
 			this.synchroniseTargetNetwork();
 		}
 	}
 
-	public runEpisode(env: Environment): number {
-		const { minibatchSize, warmup } = this.options;
+	public runEpisode(env: Environment, warmup = false): number {
+		const { minibatchSize } = this.options;
 
+		let steps = 0;
 		let observation = env.resetProcessed();
 		let done = false;
 		let baseRewards: readonly number[] = [];
@@ -184,10 +175,10 @@ export class DQN implements Agent {
 
 		tf.tidy(() => {
 			while (!done) {
-				this.steps += 1;
+				steps += 1;
 				const action = this.act(observation);
 				const sample = env.step(action);
-				const processedSample = env.processSample(sample, this.steps);
+				const processedSample = env.processSample(sample, steps);
 				const {
 					observation: nextObservation,
 					reward,
@@ -202,8 +193,8 @@ export class DQN implements Agent {
 					nextObservation,
 				});
 
-				if (this.steps >= warmup && this.replayMemory.size >= minibatchSize) {
-					this.learn();
+				if (!warmup && this.replayMemory.size >= minibatchSize) {
+					this.learn(steps);
 				}
 
 				baseRewards = [...baseRewards, sample.reward];
@@ -230,7 +221,6 @@ export class DQN implements Agent {
 			state: {
 				replayMemory: this.replayMemory,
 				epsilon: this.epsilon,
-				steps: this.steps,
 				qNetworkPath,
 				targetNetworkPath,
 			},
