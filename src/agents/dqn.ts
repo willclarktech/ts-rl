@@ -81,15 +81,19 @@ export class DQN implements Agent {
 		this.targetNetwork.setWeights(newTargetWeights);
 	}
 
-	private act(observation: Observation): number {
+	private act(observation: Observation, warmup?: boolean): number {
 		const { numActions } = this.env;
 		const { epsilonDecay, epsilonMinimum } = this.options;
 
-		const shouldActRandom = Math.random() < this.epsilon;
+		if (warmup) {
+			return sampleUniform(numActions);
+		}
+
+		const shouldExplore = Math.random() < this.epsilon;
 
 		this.epsilon = Math.max(epsilonMinimum, this.epsilon * epsilonDecay);
 
-		if (shouldActRandom) {
+		if (shouldExplore) {
 			return sampleUniform(numActions);
 		}
 
