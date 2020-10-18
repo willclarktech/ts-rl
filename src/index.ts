@@ -87,8 +87,14 @@ const createAgentAndGetOptions = (
 };
 
 const main = async (): Promise<void> => {
-	const agentName = process.argv[2] ?? "Random";
-	const environmentName = process.argv[3] ?? "Blackjack";
+	const agentName = process.argv[2];
+	const environmentName = process.argv[3];
+
+	if (!agentName || !environmentName) {
+		console.error("Usage: npm start <agent name> <environment name>");
+		console.error("Example: npm start ActorCritic CartPole");
+		process.exit(1);
+	}
 
 	try {
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
