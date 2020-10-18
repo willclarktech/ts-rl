@@ -16,8 +16,8 @@ export const train = (
 ): boolean => {
 	const logFile = `${logDirectory}/${agent.name}-${environment.name}.json`;
 
-	const returns = [];
-	const rollingAverageReturns = [];
+	let returns: readonly number[] = [];
+	let rollingAverageReturns: readonly number[] = [];
 
 	log(`Warming up for ${warmupEpisodes} episodes...`);
 	for (let episode = 1; episode <= warmupEpisodes; ++episode) {
@@ -27,10 +27,10 @@ export const train = (
 
 	for (let episode = 1; episode <= maxEpisodes; ++episode) {
 		const ret = agent.runEpisode(environment);
-		returns.push(ret);
+		returns = [...returns, ret];
 
 		const rollingAverageReturn = mean(returns.slice(-100));
-		rollingAverageReturns.push(rollingAverageReturn);
+		rollingAverageReturns = [...rollingAverageReturns, rollingAverageReturn];
 
 		const didWin =
 			environment.winningScore !== undefined &&
