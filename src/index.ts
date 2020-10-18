@@ -54,9 +54,9 @@ const createEnvironment = (environmentName: string): Environment => {
 	switch (environmentName) {
 		case "blackjack":
 			return new Blackjack();
-		case "cartpole":
+		case "cart-pole":
 			return new CartPole();
-		case "mountaincar":
+		case "mountain-car":
 			return new MountainCar();
 		default:
 			throw new Error("Environment name not recognised");
@@ -90,7 +90,7 @@ const createAgentAndGetOptions = (
 	readonly trainingOptions: options.TrainingOptions;
 } => {
 	switch (agentName) {
-		case "actorcritic": {
+		case "actor-critic": {
 			const actorCriticOptions = options.ActorCritic[environment.name];
 			verifyOptions(actorCriticOptions, agentName, environment.name);
 			const { trainingOptions, ...agentOptions } = actorCriticOptions;
