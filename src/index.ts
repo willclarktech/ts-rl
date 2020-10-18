@@ -7,11 +7,11 @@ import { log } from "./util";
 
 const createEnvironment = (environmentName: string): Environment => {
 	switch (environmentName) {
-		case "blackjack":
+		case "Blackjack":
 			return new Blackjack();
-		case "cart-pole":
+		case "CartPole":
 			return new CartPole();
-		case "mountain-car":
+		case "MountainCar":
 			return new MountainCar();
 		default:
 			throw new Error("Environment name not recognised");
@@ -45,7 +45,7 @@ const createAgentAndGetOptions = (
 	readonly trainingOptions: options.TrainingOptions;
 } => {
 	switch (agentName) {
-		case "actor-critic": {
+		case "ActorCritic": {
 			const actorCriticOptions = options.ActorCritic[environment.name];
 			verifyOptions(actorCriticOptions, agentName, environment.name);
 			const { trainingOptions, ...agentOptions } = actorCriticOptions;
@@ -54,7 +54,7 @@ const createAgentAndGetOptions = (
 				trainingOptions,
 			};
 		}
-		case "dqn": {
+		case "DQN": {
 			const dqnOptions = options.DQN[environment.name];
 			verifyOptions(dqnOptions, agentName, environment.name);
 			const { trainingOptions, ...agentOptions } = dqnOptions;
@@ -63,7 +63,7 @@ const createAgentAndGetOptions = (
 				trainingOptions,
 			};
 		}
-		case "random": {
+		case "Random": {
 			const randomOptions = options.Random[environment.name];
 			verifyOptions(randomOptions, agentName, environment.name);
 			const { trainingOptions } = randomOptions;
@@ -72,7 +72,7 @@ const createAgentAndGetOptions = (
 				trainingOptions,
 			};
 		}
-		case "reinforce": {
+		case "Reinforce": {
 			const reinforceOptions = options.Reinforce[environment.name];
 			verifyOptions(reinforceOptions, agentName, environment.name);
 			const { trainingOptions, ...agentOptions } = reinforceOptions;
@@ -87,15 +87,24 @@ const createAgentAndGetOptions = (
 };
 
 const main = async (): Promise<void> => {
-	const agentName = process.argv[2] ?? "reinforce";
-	const environmentName = process.argv[3] ?? "cartpole";
+	const agentName = process.argv[2] ?? "Random";
+	const environmentName = process.argv[3] ?? "Blackjack";
+
+	try {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const { seed } = (options as any)[agentName][
+			environmentName
+		].trainingOptions;
+		setSeed(seed);
+	} catch (error) {
+		// seed not specified
+	}
 
 	const environment = createEnvironment(environmentName);
 	const { agent, trainingOptions } = createAgentAndGetOptions(
 		agentName,
 		environment,
 	);
-	setSeed(trainingOptions.seed);
 
 	log(
 		`Using training options: ${JSON.stringify(
