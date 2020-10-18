@@ -2,13 +2,14 @@ import { ActorCriticOptions } from "./agents/actor-critic";
 import { DQNOptions } from "./agents/dqn";
 import { ReinforceOptions } from "./agents/reinforce";
 
-export const seed = 123456789;
+const defaultSeed = 123456789;
 
 export interface TrainingOptions {
 	readonly maxEpisodes: number;
 	readonly rollingAveragePeriod: number;
 	readonly logPeriod: number;
 	readonly logDirectory: string;
+	readonly seed: number;
 	readonly warmupEpisodes: number;
 }
 
@@ -19,46 +20,54 @@ interface AgentOptions<T = unknown> {
 export const saveDirectory = "./models";
 const logDirectory = "./results/data";
 
+const defaultTrainingOptions = {
+	logDirectory,
+	seed: defaultSeed,
+	warmupEpisodes: 0,
+};
+
 const defaultBlackjackTrainingOptions: TrainingOptions = {
+	...defaultTrainingOptions,
 	maxEpisodes: 1000,
 	rollingAveragePeriod: 100,
 	logPeriod: 100,
-	logDirectory,
-	warmupEpisodes: 0,
 };
 
 const defaultCartPoleTrainingOptions: TrainingOptions = {
+	...defaultTrainingOptions,
 	maxEpisodes: 1000,
 	rollingAveragePeriod: 100,
 	logPeriod: 10,
-	logDirectory,
-	warmupEpisodes: 0,
 };
 
 const defaultMountainCarTrainingOptions: TrainingOptions = {
+	...defaultTrainingOptions,
 	maxEpisodes: 10_000,
 	rollingAveragePeriod: 100,
 	logPeriod: 10,
-	logDirectory,
-	warmupEpisodes: 0,
 };
 
 export const ActorCritic: AgentOptions<ActorCriticOptions> = {
 	Blackjack: {
-		seed,
+		seed: defaultSeed,
 		alphaActor: 0.01,
 		alphaCritic: 0.001,
 		gamma: 0.99,
 		hiddenWidths: [8],
-		trainingOptions: defaultBlackjackTrainingOptions,
+		trainingOptions: {
+			...defaultBlackjackTrainingOptions,
+		},
 	},
 	CartPole: {
-		seed,
+		seed: defaultSeed,
 		alphaActor: 0.00001,
 		alphaCritic: 0.00003,
 		gamma: 0.99,
 		hiddenWidths: [8],
-		trainingOptions: { ...defaultCartPoleTrainingOptions, maxEpisodes: 10_000 },
+		trainingOptions: {
+			...defaultCartPoleTrainingOptions,
+			maxEpisodes: 10_000,
+		},
 	},
 };
 
@@ -81,13 +90,13 @@ export const DQN: AgentOptions<DQNOptions> = {
 		},
 	},
 	CartPole: {
-		hiddenWidths: [24],
+		hiddenWidths: [8],
 		alpha: 0.00001,
-		gamma: 0.9,
+		gamma: 0.99,
 		epsilonInitial: 1,
 		epsilonMinimum: 0.01,
-		epsilonDecay: 0.999,
-		tau: 0.8,
+		epsilonDecay: 0.995,
+		tau: 0.5,
 		targetNetworkUpdatePeriod: 1,
 		shouldClipLoss: true,
 		replayMemoryCapacity: 32_768,
@@ -126,33 +135,44 @@ export const Random: AgentOptions = {
 		},
 	},
 	CartPole: {
-		trainingOptions: defaultCartPoleTrainingOptions,
+		trainingOptions: {
+			...defaultCartPoleTrainingOptions,
+		},
 	},
 	MountainCar: {
-		trainingOptions: defaultMountainCarTrainingOptions,
+		trainingOptions: {
+			...defaultMountainCarTrainingOptions,
+		},
 	},
 };
 
 export const Reinforce: AgentOptions<ReinforceOptions> = {
 	Blackjack: {
-		seed,
+		seed: defaultSeed,
 		hiddenWidths: [8],
 		alpha: 0.03,
 		gamma: 0.99,
-		trainingOptions: defaultBlackjackTrainingOptions,
+		trainingOptions: {
+			...defaultBlackjackTrainingOptions,
+		},
 	},
 	CartPole: {
-		seed,
+		seed: defaultSeed,
 		hiddenWidths: [4],
 		alpha: 0.003,
 		gamma: 0.99,
-		trainingOptions: { ...defaultCartPoleTrainingOptions, maxEpisodes: 2000 },
+		trainingOptions: {
+			...defaultCartPoleTrainingOptions,
+			maxEpisodes: 2000,
+		},
 	},
 	MountainCar: {
-		seed,
+		seed: defaultSeed,
 		hiddenWidths: [2],
 		alpha: 0.01,
 		gamma: 0.99,
-		trainingOptions: defaultMountainCarTrainingOptions,
+		trainingOptions: {
+			...defaultMountainCarTrainingOptions,
+		},
 	},
 };

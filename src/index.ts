@@ -1,8 +1,7 @@
-import "./random";
-
 import { ActorCritic, Agent, DQN, Random, Reinforce } from "./agents";
 import { Blackjack, CartPole, Environment, MountainCar } from "./environments";
 import * as options from "./options";
+import { setSeed } from "./random";
 import { log, logEpisode, mean } from "./util";
 
 const train = (
@@ -147,6 +146,7 @@ const main = async (): Promise<void> => {
 		agentName,
 		environment,
 	);
+	setSeed(trainingOptions.seed);
 
 	log(
 		`Using training options: ${JSON.stringify(
