@@ -1,6 +1,9 @@
-import { ActorCriticOptions } from "./agents/actor-critic";
-import { DQNOptions } from "./agents/dqn";
-import { ReinforceOptions } from "./agents/reinforce";
+import {
+	A3COptions,
+	ActorCriticOptions,
+	DQNOptions,
+	ReinforceOptions,
+} from "./agents";
 
 const defaultSeed = 123456789;
 
@@ -46,6 +49,8 @@ const defaultMountainCarTrainingOptions: TrainingOptions = {
 	rollingAveragePeriod: 100,
 	logPeriod: 10,
 };
+
+export const A3C: AgentOptions<A3COptions> = {};
 
 export const ActorCritic: AgentOptions<ActorCriticOptions> = {
 	Blackjack: {

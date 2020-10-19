@@ -1,4 +1,4 @@
-import { ActorCritic, Agent, DQN, Random, Reinforce } from "./agents";
+import { A3C, ActorCritic, Agent, DQN, Random, Reinforce } from "./agents";
 import { Blackjack, CartPole, Environment, MountainCar } from "./environments";
 import * as options from "./options";
 import { setSeed } from "./random";
@@ -45,6 +45,15 @@ const createAgentAndGetOptions = (
 	readonly trainingOptions: options.TrainingOptions;
 } => {
 	switch (agentName) {
+		case "A3C": {
+			const a3cOptions = options.A3C[environment.name];
+			verifyOptions(a3cOptions, agentName, environment.name);
+			const { trainingOptions, ...agentOptions } = a3cOptions;
+			return {
+				agent: new A3C(environment, agentOptions),
+				trainingOptions,
+			};
+		}
 		case "ActorCritic": {
 			const actorCriticOptions = options.ActorCritic[environment.name];
 			verifyOptions(actorCriticOptions, agentName, environment.name);

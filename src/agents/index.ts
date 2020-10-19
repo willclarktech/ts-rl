@@ -1,6 +1,7 @@
 export { Agent } from "./core";
 
-export { ActorCritic } from "./actor-critic";
-export { DQN } from "./dqn";
+export { A3C, A3COptions } from "./a3c";
+export { ActorCritic, ActorCriticOptions } from "./actor-critic";
+export { DQN, DQNOptions } from "./dqn";
 export { Random } from "./random";
-export { Reinforce } from "./reinforce";
+export { Reinforce, ReinforceOptions } from "./reinforce";
