@@ -1,4 +1,6 @@
 build/
 data/
+models/
+notebooks/
 
 package-lock.json
