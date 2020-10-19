@@ -24,7 +24,7 @@
 		"notebook": "jupyter notebook"
 	},
 	"dependencies": {
-		"@tensorflow/tfjs-node": "^2.6.0"
+		"@tensorflow/tfjs-node": "2.5.0"
 	},
 	"devDependencies": {
 		"@types/jest": "^26.0.14",
