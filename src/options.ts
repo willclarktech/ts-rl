@@ -1,6 +1,7 @@
 import {
 	A3COptions,
 	ActorCriticOptions,
+	DDPGOptions,
 	DQNOptions,
 	ReinforceOptions,
 } from "./agents";
@@ -50,7 +51,13 @@ const defaultMountainCarTrainingOptions: TrainingOptions = {
 	logPeriod: 10,
 };
 
-export const A3C: AgentOptions<A3COptions> = {};
+export const A3C: AgentOptions<A3COptions> = {
+	Blackjack: {
+		trainingOptions: {
+			...defaultBlackjackTrainingOptions,
+		},
+	},
+};
 
 export const ActorCritic: AgentOptions<ActorCriticOptions> = {
 	Blackjack: {
@@ -72,6 +79,14 @@ export const ActorCritic: AgentOptions<ActorCriticOptions> = {
 		trainingOptions: {
 			...defaultCartPoleTrainingOptions,
 			maxEpisodes: 10_000,
+		},
+	},
+};
+
+export const DDPG: AgentOptions<DDPGOptions> = {
+	Blackjack: {
+		trainingOptions: {
+			...defaultBlackjackTrainingOptions,
 		},
 	},
 };

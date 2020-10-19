@@ -1,4 +1,12 @@
-import { A3C, ActorCritic, Agent, DQN, Random, Reinforce } from "./agents";
+import {
+	A3C,
+	ActorCritic,
+	Agent,
+	DDPG,
+	DQN,
+	Random,
+	Reinforce,
+} from "./agents";
 import { Blackjack, CartPole, Environment, MountainCar } from "./environments";
 import * as options from "./options";
 import { setSeed } from "./random";
@@ -60,6 +68,15 @@ const createAgentAndGetOptions = (
 			const { trainingOptions, ...agentOptions } = actorCriticOptions;
 			return {
 				agent: new ActorCritic(environment, agentOptions),
+				trainingOptions,
+			};
+		}
+		case "DDPG": {
+			const ddpgOptions = options.DDPG[environment.name];
+			verifyOptions(ddpgOptions, agentName, environment.name);
+			const { trainingOptions, ...agentOptions } = ddpgOptions;
+			return {
+				agent: new DDPG(environment, agentOptions),
 				trainingOptions,
 			};
 		}
