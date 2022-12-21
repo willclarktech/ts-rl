@@ -47,12 +47,8 @@ export class DQN implements Agent {
 
 	public constructor(env: Environment, options: DQNOptions) {
 		const { numObservationDimensionsProcessed, numActions } = env;
-		const {
-			hiddenWidths,
-			alpha,
-			epsilonInitial,
-			replayMemoryCapacity,
-		} = options;
+		const { hiddenWidths, alpha, epsilonInitial, replayMemoryCapacity } =
+			options;
 		this.name = "DQN";
 		this.env = env;
 		this.options = options;

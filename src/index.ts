@@ -124,9 +124,8 @@ const main = async (): Promise<void> => {
 
 	try {
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const { seed } = (options as any)[agentName][
-			environmentName
-		].trainingOptions;
+		const { seed } = (options as any)[agentName][environmentName]
+			.trainingOptions;
 		setSeed(seed);
 	} catch (error) {
 		// seed not specified

@@ -42,9 +42,8 @@ async function run() {
 	try {
 		const { returns, rollingAverageReturns } = await loadJSON(filePath);
 		const returnsPoints = returns.map(convertToPoint);
-		const rollingAverageReturnsPoints = rollingAverageReturns.map(
-			convertToPoint,
-		);
+		const rollingAverageReturnsPoints =
+			rollingAverageReturns.map(convertToPoint);
 
 		tfvis.visor().open();
 		tfvis.render.linechart(
